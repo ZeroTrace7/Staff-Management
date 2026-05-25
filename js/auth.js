@@ -167,38 +167,35 @@ const Auth = {
         throw new Error('Only admins can add employees.');
       }
 
-      const isolatedClient = this._createIsolatedClient();
       const client = this._requireClient();
-      const { data: authData, error: authError } = await isolatedClient.auth.signUp({
-        email: employeeEmail,
-        password: employeePassword,
-        options: {
-          emailRedirectTo: this._getEmailRedirectUrl('employee.html')
-        }
-      });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Employee auth account was not created.');
+      const { data: { session } } = await client.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Please sign in again.');
+      }
 
-      const { data: profile, error: profileError } = await client
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          company_id: adminProfile.company_id,
+      const response = await fetch('/api/create-employee', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           name: employeeName,
           email: employeeEmail,
-          role: 'employee'
+          password: employeePassword
         })
-        .select()
-        .single();
-      if (profileError) throw profileError;
+      });
 
-      await isolatedClient.auth.signOut();
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || 'Employee account could not be created.');
+      }
 
       console.log('[Auth] Employee provisioned:', employeeEmail);
       return {
         success: true,
-        employee: profile,
-        needsConfirmation: !authData.session
+        employee: payload.employee,
+        needsConfirmation: false
       };
     } catch (err) {
       console.error('[Auth] provisionEmployee error:', err.message);

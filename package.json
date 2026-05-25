@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "check": "node --check api/create-employee.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2"
+  },
+  "devDependencies": {}
+}

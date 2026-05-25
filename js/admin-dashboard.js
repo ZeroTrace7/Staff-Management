@@ -135,8 +135,9 @@ const AdminDashboard = {
     const time = document.getElementById('work-start-time');
 
     if (company) {
-      if (lat) lat.value = company.geofence_lat ?? '';
-      if (lng) lng.value = company.geofence_lng ?? '';
+      const hasGeofence = Number(company.geofence_lat) !== 0 || Number(company.geofence_lng) !== 0;
+      if (lat) lat.value = hasGeofence ? company.geofence_lat : '';
+      if (lng) lng.value = hasGeofence ? company.geofence_lng : '';
       if (radius) radius.value = company.geofence_radius ?? 100;
       if (time) time.value = String(company.work_start_time || '09:00').slice(0, 5);
     }

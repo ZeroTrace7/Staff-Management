@@ -344,15 +344,26 @@ async function handleAddEmployee() {
 
 async function useCurrentLocationForGeofence() {
   clearAuthError('geofence-error');
+  const btn = document.querySelector('button[onclick="useCurrentLocationForGeofence()"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Getting location...';
+  }
 
   try {
     const pos = await LocationService.getCurrentPosition();
     const lat = document.getElementById('geofence-lat');
     const lng = document.getElementById('geofence-lng');
-    if (lat) lat.value = pos.lat;
-    if (lng) lng.value = pos.lng;
+    if (lat) lat.value = Number(pos.lat).toFixed(6);
+    if (lng) lng.value = Number(pos.lng).toFixed(6);
+    showAuthError('geofence-error', 'Location captured. Save the geofence to continue.');
   } catch (err) {
     showAuthError('geofence-error', err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Use Current Location';
+    }
   }
 }
 
@@ -371,6 +382,9 @@ async function handleSaveGeofence() {
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return showAuthError('geofence-error', 'Latitude and longitude are required.');
+  }
+  if (lat === 0 && lng === 0) {
+    return showAuthError('geofence-error', 'Use your office location before saving.');
   }
   if (!Number.isFinite(radius) || radius < 10) {
     return showAuthError('geofence-error', 'Radius must be at least 10 metres.');
