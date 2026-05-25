@@ -271,3 +271,52 @@ function checkAllPermissions() {
     continueBtn.onclick = () => navigateTo('view-emp-dashboard');
   }
 }
+
+// Employee Punch Logic
+let isPunchedIn = false;
+
+function handlePunch() {
+  closeModal('punch-modal');
+  isPunchedIn = !isPunchedIn;
+  
+  const banner = document.getElementById('emp-top-banner');
+  const statusText = document.getElementById('emp-status-text');
+  const btnPunch = document.getElementById('btn-punch');
+  const modalTitle = document.getElementById('punch-modal-title');
+  const modalDesc = document.getElementById('punch-modal-desc');
+  const modalConfirm = document.getElementById('punch-modal-confirm');
+  
+  if (isPunchedIn) {
+    if (banner) {
+      banner.innerText = 'Attendance marked successfully for today';
+      banner.style.background = '#065F46'; // dark green
+    }
+    if (statusText) statusText.innerText = 'You have successfully logged in!';
+    if (btnPunch) {
+      btnPunch.innerText = 'Punch OUT';
+      btnPunch.style.background = '#EF4444'; // red
+    }
+    if (modalTitle) {
+      modalTitle.innerText = 'Punching OUT?';
+      modalTitle.style.color = '#EF4444';
+    }
+    if (modalDesc) modalDesc.innerText = 'Are you sure you want to punch OUT?';
+    if (modalConfirm) modalConfirm.style.color = '#EF4444';
+  } else {
+    if (banner) {
+      banner.innerText = 'You have successfully logged off for today';
+      banner.style.background = '#374151'; // gray
+    }
+    if (statusText) statusText.innerText = 'You have successfully logged off!';
+    if (btnPunch) {
+      btnPunch.innerText = 'Punch IN';
+      btnPunch.style.background = '#4ADE80'; // green
+    }
+    if (modalTitle) {
+      modalTitle.innerText = 'Punching IN?';
+      modalTitle.style.color = '#4ADE80';
+    }
+    if (modalDesc) modalDesc.innerText = 'Are you sure you want to punch IN?';
+    if (modalConfirm) modalConfirm.style.color = '#4ADE80';
+  }
+}

@@ -252,8 +252,8 @@
     </div>
     
     <!-- Top Banner -->
-    <div style="background: #374151; color: white; text-align: center; padding: 12px; font-size: 0.95rem; font-weight: 500;">
-      Attendance marked successfully for today
+    <div id="emp-top-banner" style="background: #374151; color: white; text-align: center; padding: 12px; font-size: 0.95rem; font-weight: 500;">
+      Please punch in to mark your attendance
     </div>
 
     <!-- Main Content -->
@@ -263,14 +263,14 @@
         h<span style="color: #F97316; font-size: 120px; position: absolute; bottom: 50px; right: -30px;">.</span>
       </div>
       
-      <div style="color: white; font-weight: 600; font-size: 1.1rem; margin-top: -30px; z-index: 10;">
-        You have successfully logged off !
+      <div id="emp-status-text" style="color: white; font-weight: 600; font-size: 1.1rem; margin-top: -30px; z-index: 10;">
+        Ready to start your day?
       </div>
     </div>
 
     <!-- White bottom container for Punch IN -->
     <div style="position: absolute; bottom: 128px; left: 0; right: 0; background: white; padding: 16px; z-index: 40;">
-      <button onclick="openModal('punch-modal')" style="width: 100%; background: #4ADE80; color: white; font-weight: 600; font-size: 1.1rem; border: none; border-radius: 12px; height: 56px; cursor: pointer; transition: transform 0.1s ease;">
+      <button id="btn-punch" onclick="openModal('punch-modal')" style="width: 100%; background: #4ADE80; color: white; font-weight: 600; font-size: 1.1rem; border: none; border-radius: 12px; height: 56px; cursor: pointer; transition: transform 0.1s ease;">
         Punch IN
       </button>
     </div>
@@ -278,11 +278,11 @@
 
   <div id="punch-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;">
     <div style="background: #202D26; width: 100%; max-width: 320px; border-radius: 24px; padding: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-      <h3 style="color: #4ADE80; font-size: 1.25rem; font-weight: bold; margin-bottom: 12px;">Punching IN?</h3>
-      <p style="color: #9CA3AF; margin-bottom: 32px; font-size: 1rem;">Are you sure you want to punch IN?</p>
+      <h3 id="punch-modal-title" style="color: #4ADE80; font-size: 1.25rem; font-weight: bold; margin-bottom: 12px;">Punching IN?</h3>
+      <p id="punch-modal-desc" style="color: #9CA3AF; margin-bottom: 32px; font-size: 1rem;">Are you sure you want to punch IN?</p>
       <div style="display: flex; justify-content: flex-end; gap: 32px;">
         <button onclick="closeModal('punch-modal')" style="color: #93C5FD; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Cancel</button>
-        <button onclick="closeModal('punch-modal')" style="color: #4ADE80; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Confirm</button>
+        <button id="punch-modal-confirm" onclick="handlePunch()" style="color: #4ADE80; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Confirm</button>
       </div>
     </div>
   </div>
