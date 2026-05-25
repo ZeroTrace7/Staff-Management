@@ -57,7 +57,9 @@ const Auth = {
         password
       });
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Signup failed. No user was created.');
+      if (!authData.user) {
+        throw new Error('Signup was not completed. This email may already be registered, or signup is disabled in Supabase. If this is your email, uncheck "Creating a new account" and sign in.');
+      }
 
       this._savePendingOwnerBootstrap(email, companyName);
 
@@ -201,7 +203,14 @@ const Auth = {
       return { success: true, user: data.user, profile };
     } catch (err) {
       console.error('[Auth] signIn error:', err.message);
-      return { success: false, error: err.message };
+      const message = String(err.message || '');
+      if (message.toLowerCase().includes('email not confirmed')) {
+        return {
+          success: false,
+          error: 'Check your email and confirm your account before signing in.'
+        };
+      }
+      return { success: false, error: message };
     }
   },
 
