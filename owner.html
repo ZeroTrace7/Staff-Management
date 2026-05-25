@@ -7,6 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
   <meta name="theme-color" content="#2563EB">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -157,7 +158,7 @@
         <div class="flex justify-between items-start mb-6">
           <div>
             <div class="font-bold text-lg" style="color: #E2E8F0;">Attendance Statistics</div>
-            <div class="text-xs" style="color: #6B7280; margin-top: 4px;">Based on May 25, 2026</div>
+            <div id="owner-stats-date" class="text-xs" style="color: #6B7280; margin-top: 4px;">Based on today</div>
           </div>
           <button style="background: transparent; border: 1px solid #374151; color: #9CA3AF; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
             📅 Today
@@ -167,53 +168,53 @@
         <div class="stat-grid">
           <!-- Row 1 -->
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #9CA3AF;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #9CA3AF;"></div><span id="stat-not-marked" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Not marked</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span id="stat-present" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Present</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #EF4444;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #EF4444;"></div><span id="stat-absent" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Absence</div>
           </div>
           
           <!-- Row 2 -->
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span id="stat-late" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Late</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #A855F7;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
-            <div class="stat-category">Leave</div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #A855F7;"></div><span id="stat-geofence-alerts" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Outside zone</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
-            <div class="stat-category">Early</div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span id="stat-clocked-out" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Clocked out</div>
           </div>
 
           <!-- Row 3 -->
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span id="stat-heads" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Heads</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span id="stat-archived" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Archived</div>
           </div>
 
           <!-- Row 4 -->
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span id="stat-admins" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Admin</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
-            <div class="stat-category">Manager</div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span id="stat-location-updates" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Located</div>
           </div>
           <div class="stat-cell">
-            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span id="stat-employees" class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Employee</div>
           </div>
         </div>
@@ -222,43 +223,44 @@
       <!-- Search -->
       <div style="position: relative;" class="mb-4">
         <span style="position: absolute; left: 1rem; top: 14px; color: #9CA3AF;">🔍</span>
-        <input type="text" class="input" placeholder="Search" style="padding-left: 2.5rem; border-radius: 16px; height: 3.5rem; background: #12141A; border: none; color: white;">
+        <input id="staff-search" type="text" class="input" placeholder="Search staff" style="padding-left: 2.5rem; border-radius: 16px; height: 3.5rem; background: #12141A; border: none; color: white;">
         <span style="position: absolute; right: 1.5rem; top: 14px; color: #9CA3AF; font-size: 1.2rem;">›</span>
       </div>
 
-      <!-- Filters -->
       <div class="flex gap-2 mb-6">
-        <div style="background: #E2E8F0; color: #0F172A; border-radius: 20px; padding: 10px 24px; font-size: 1rem; font-weight: 500;">All</div>
-        <div style="background: #1F2937; color: white; border-radius: 20px; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; font-size: 1.25rem;">+</div>
+        <button onclick="openModal('geofence-modal')" style="background: #E2E8F0; color: #0F172A; border-radius: 20px; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border: none; cursor: pointer;">Set Geofence</button>
+        <button onclick="openModal('add-employee-modal')" style="background: #1F2937; color: white; border-radius: 20px; padding: 10px 20px; font-size: 0.95rem; font-weight: 600; border: none; cursor: pointer;">Add Employee</button>
+      </div>
+
+      <div class="card mb-4" style="background: #12141A; border: 1px solid #1F2937; border-radius: 16px;">
+        <div class="font-bold text-lg mb-2" style="color: #E2E8F0;">Office Geofence</div>
+        <div id="geofence-summary" class="text-sm" style="color: #9CA3AF; line-height: 1.5;">Not configured yet.</div>
+      </div>
+
+      <div class="card mb-4" style="background: #12141A; border: 1px solid #1F2937; border-radius: 16px;">
+        <div class="flex justify-between items-center mb-4">
+          <div class="font-bold text-lg" style="color: #E2E8F0;">Staff Roster</div>
+          <button onclick="openModal('add-employee-modal')" style="background: #2563EB; color: white; border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer;">Add</button>
+        </div>
+        <div id="staff-list" class="flex flex-col gap-3">
+          <div style="color: #9CA3AF; font-size: 0.95rem;">No staff added yet.</div>
+        </div>
       </div>
     </div>
 
     <!-- FAB -->
-    <div style="position: fixed; bottom: 160px; right: 16px; background: #ADCDFF; width: 72px; height: 72px; border-radius: 24px; display: flex; justify-content: center; align-items: center; font-size: 32px; color: #0F172A; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 50; cursor: pointer;">
+    <div onclick="openModal('add-employee-modal')" style="position: fixed; bottom: 160px; right: 16px; background: #ADCDFF; width: 72px; height: 72px; border-radius: 24px; display: flex; justify-content: center; align-items: center; font-size: 32px; color: #0F172A; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 50; cursor: pointer;">
       +
     </div>
   </div>
 
   <!-- VIEW: MAP -->
-  <div id="view-map" class="app-layout hidden" style="background: #e0e0e0; position: relative; color: black;">
-    <!-- Fake Map Background -->
-    <div style="position: absolute; inset: 0; background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Cpath d=%22M0 50 Q 25 25, 50 50 T 100 50%22 fill=%22none%22 stroke=%22%23b0bec5%22 stroke-width=%221%22/%3E%3Cpath d=%22M50 0 L 50 100%22 stroke=%22%23b0bec5%22 stroke-width=%221%22/%3E%3C/svg%3E'); background-size: 100px 100px;"></div>
-    <div style="position: absolute; top: 100px; left: 50px; font-weight: bold; color: #546E7A; font-size: 1.2rem;">SANSAD MARG AREA</div>
-    <div style="position: absolute; top: 200px; left: 30px; font-weight: bold; color: #8E24AA; font-size: 1rem;">Samvidhan Sadan</div>
-    
-    <!-- Top Left Trial Pill -->
-    <div style="position: absolute; top: 40px; left: 16px; display: flex; z-index: 10;">
-       <div style="background: white; border-radius: 24px; padding: 10px 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-         <span style="font-size: 1.4rem;">h<span style="color:#F59E0B">.</span></span>
-         <span style="color: #111827; font-weight: 600;">Trial</span>
-       </div>
+  <div id="view-map" class="app-layout hidden" style="background: #0F172A; position: relative; color: white;">
+    <div style="position: absolute; top: 20px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+      <div style="background: rgba(15, 23, 42, 0.9); border-radius: 18px; padding: 10px 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">Staff Map</div>
+      <button onclick="AdminDashboard.loadMap()" style="background: rgba(15, 23, 42, 0.9); color: white; width: 44px; height: 44px; border: none; border-radius: 50%; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">↻</button>
     </div>
-
-    <!-- Top Right Actions -->
-    <div style="position: absolute; top: 40px; right: 16px; display: flex; flex-direction: column; gap: 12px; z-index: 10;">
-       <div style="background: #1F2937; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">↻</div>
-       <div style="background: #1F2937; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">▲</div>
-    </div>
+    <div id="owner-map" style="position: absolute; inset: 0;"></div>
   </div>
 
   <!-- VIEW: SETTINGS (Dark Theme) -->
@@ -397,22 +399,26 @@
         </div>
       </div>
 
-      <h2 class="font-bold mb-4" style="color: white; font-size: 1.1rem;">Invite Employees</h2>
+      <h2 class="font-bold mb-4" style="color: white; font-size: 1.1rem;">Workplace Setup</h2>
       <div class="mb-4" style="background: #2D3748; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <div class="text-sm" style="color: #9CA3AF; margin-bottom: 4px;">Company Code</div>
-          <div class="font-bold" style="font-size: 1.8rem; color: white; letter-spacing: 2px;">OODD1</div>
+          <div class="text-sm" style="color: #9CA3AF; margin-bottom: 4px;">Geofence Status</div>
+          <div id="settings-geofence-summary" class="font-bold" style="font-size: 1.1rem; color: white; line-height: 1.4;">Not configured</div>
         </div>
         <div class="flex gap-4 text-xl" style="color: #E2E8F0;">
-          <span>📋</span>
-          <span>🔗</span>
+          <button onclick="openModal('geofence-modal')" style="background: #2563EB; color: white; border: none; border-radius: 10px; padding: 10px 14px; cursor: pointer;">Edit</button>
         </div>
       </div>
 
       <div class="settings-list mb-8" style="background: #1B1E24; border: none; border-radius: 16px;">
-        <div class="settings-item" style="padding: 18px 16px;">
+        <div class="settings-item" style="padding: 18px 16px;" onclick="openModal('add-employee-modal')">
+          <div class="settings-item-icon" style="color: #D1D5DB;">👤</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Add Employee Account</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="padding: 18px 16px;" onclick="navigateTo('view-dashboard')">
           <div class="settings-item-icon" style="color: #D1D5DB;">📑</div>
-          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">View Logs</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Review Attendance Logs</div>
           <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
         </div>
       </div>
@@ -423,11 +429,6 @@
       </button>
 
     </div>
-  </div>
-
-  <!-- Trial Banner (Global) -->
-  <div id="trial-banner" class="hidden" style="position: fixed; bottom: 84px; left: 0; right: 0; background: #FBBF24; color: #0F172A; text-align: center; padding: 12px; font-size: 0.875rem; font-weight: 600; z-index: 50;">
-    You're in Trial Mode. Upgrade now for full access!
   </div>
 
   <!-- Bottom Nav (Global Owner) -->
@@ -441,7 +442,6 @@
       <span style="color: white; font-weight: 500;">Staff</span>
     </div>
     <div class="bottom-nav-item" style="position: relative;" id="nav-work">
-      <div style="position: absolute; top: -5px; right: 0; background: #E2E8F0; color: black; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">beta</div>
       <div class="nav-icon" style="background: transparent;">💼</div>
       <span>Work</span>
     </div>
@@ -455,17 +455,65 @@
     </div>
   </div>
 
+  <div id="add-employee-modal" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 120; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #111827; width: 100%; max-width: 420px; border-radius: 20px; padding: 24px; color: white; box-shadow: 0 16px 40px rgba(0,0,0,0.35);">
+      <div class="flex justify-between items-center mb-4">
+        <h3 style="font-size: 1.25rem; font-weight: 700;">Add Employee</h3>
+        <button onclick="closeModal('add-employee-modal')" style="background: none; border: none; color: #9CA3AF; font-size: 1.4rem; cursor: pointer;">×</button>
+      </div>
+      <div class="flex flex-col gap-4">
+        <input id="add-employee-name" type="text" class="input" placeholder="Full name" style="background: #0F172A; border-color: #374151; color: white;">
+        <input id="add-employee-email" type="email" class="input" placeholder="Email address" style="background: #0F172A; border-color: #374151; color: white;">
+        <input id="add-employee-password" type="password" class="input" placeholder="Temporary password" style="background: #0F172A; border-color: #374151; color: white;">
+        <div id="add-employee-error" class="error-msg hidden"></div>
+        <button id="btn-add-employee" onclick="handleAddEmployee()" class="btn-primary">Create Employee</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="geofence-modal" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 120; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #111827; width: 100%; max-width: 440px; border-radius: 20px; padding: 24px; color: white; box-shadow: 0 16px 40px rgba(0,0,0,0.35);">
+      <div class="flex justify-between items-center mb-4">
+        <h3 style="font-size: 1.25rem; font-weight: 700;">Configure Geofence</h3>
+        <button onclick="closeModal('geofence-modal')" style="background: none; border: none; color: #9CA3AF; font-size: 1.4rem; cursor: pointer;">×</button>
+      </div>
+      <div class="flex flex-col gap-4">
+        <div class="flex gap-3">
+          <input id="geofence-lat" type="number" step="any" class="input" placeholder="Latitude" style="background: #0F172A; border-color: #374151; color: white;">
+          <input id="geofence-lng" type="number" step="any" class="input" placeholder="Longitude" style="background: #0F172A; border-color: #374151; color: white;">
+        </div>
+        <div class="flex gap-3">
+          <input id="geofence-radius" type="number" min="10" class="input" placeholder="Radius (m)" style="background: #0F172A; border-color: #374151; color: white;">
+          <input id="work-start-time" type="time" class="input" style="background: #0F172A; border-color: #374151; color: white;">
+        </div>
+        <button onclick="useCurrentLocationForGeofence()" style="background: #1F2937; color: white; border: none; border-radius: 12px; padding: 12px; cursor: pointer;">Use Current Location</button>
+        <div id="geofence-error" class="error-msg hidden"></div>
+        <button id="btn-save-geofence" onclick="handleSaveGeofence()" class="btn-primary">Save Geofence</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Owner page: set role on load
     var selectedRole = 'business';
   </script>
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <!-- App Modules -->
   <script src="js/supabase-client.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/admin-dashboard.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch((err) => {
+          console.log('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

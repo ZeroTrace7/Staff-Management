@@ -93,7 +93,11 @@ ON companies FOR SELECT USING (
 -- Admins can update their own company (for geofence setup, settings)
 DROP POLICY IF EXISTS "Admins can update their own company" ON companies;
 CREATE POLICY "Admins can update their own company"
-ON companies FOR UPDATE USING (
+ON companies FOR UPDATE
+USING (
+    id IN (SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin')
+)
+WITH CHECK (
     id IN (SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin')
 );
 
@@ -131,7 +135,13 @@ ON users FOR INSERT WITH CHECK (
 -- Admins can update users in their company (activate/deactivate)
 DROP POLICY IF EXISTS "Admins can update users in their company" ON users;
 CREATE POLICY "Admins can update users in their company"
-ON users FOR UPDATE USING (
+ON users FOR UPDATE
+USING (
+    company_id IN (
+        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
+    )
+)
+WITH CHECK (
     company_id IN (
         SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
     )
@@ -163,7 +173,9 @@ ON attendance_logs FOR SELECT USING (
 -- Users can manage their own location
 DROP POLICY IF EXISTS "Users can manage their own location" ON last_known_locations;
 CREATE POLICY "Users can manage their own location"
-ON last_known_locations FOR ALL USING (user_id = auth.uid());
+ON last_known_locations FOR ALL
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
 
 -- Admins can view all locations in their company
 DROP POLICY IF EXISTS "Admins can view company locations" ON last_known_locations;

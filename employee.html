@@ -164,11 +164,6 @@
     </div>
   </div>
 
-  <!-- Trial Banner (Global) -->
-  <div id="trial-banner" class="hidden" style="position: fixed; bottom: 84px; left: 0; right: 0; background: #FBBF24; color: #0F172A; text-align: center; padding: 12px; font-size: 0.875rem; font-weight: 600; z-index: 50;">
-    You're in Trial Mode. Upgrade now for full access!
-  </div>
-
   <!-- Bottom Nav (Employee) -->
   <div id="emp-bottom-nav" class="bottom-nav hidden" style="background: #12141A; border-top: none; z-index: 60; height: 84px; padding-bottom: 20px;">
     <div class="bottom-nav-item active" onclick="navigateTo('view-emp-dashboard')" id="nav-punch">
@@ -180,7 +175,6 @@
       <span>You</span>
     </div>
     <div class="bottom-nav-item" style="position: relative;" id="nav-work-emp">
-      <div style="position: absolute; top: -5px; right: 0; background: #E2E8F0; color: black; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">beta</div>
       <div class="nav-icon" style="background: transparent; font-size: 1.25rem;">💼</div>
       <span>Work</span>
     </div>
@@ -199,10 +193,9 @@
     <!-- Header -->
     <div class="flex justify-between items-center px-6 py-4">
       <div class="flex items-center gap-2">
-        <span style="font-weight: bold; font-size: 1.8rem; letter-spacing: -1px;">h<span style="color: #F97316;">.</span></span>
-        <span style="font-weight: 600; font-size: 1.1rem;">Trial</span>
+        <span style="font-weight: 700; font-size: 1.15rem; letter-spacing: 0;">Staff Management</span>
       </div>
-      <div style="font-size: 1.5rem; cursor: pointer; color: white;">↻</div>
+      <div onclick="restoreEmployeePunchState()" style="font-size: 1.5rem; cursor: pointer; color: white;">↻</div>
     </div>
     
     <!-- Top Banner -->
@@ -212,9 +205,8 @@
 
     <!-- Main Content -->
     <div class="app-main flex flex-col items-center justify-center relative" style="padding-bottom: 250px;">
-      <!-- Giant Logo -->
-      <div style="font-size: 300px; font-weight: bold; color: #1B1E24; line-height: 1; letter-spacing: -15px; position: relative; margin-top: -80px;">
-        h<span style="color: #F97316; font-size: 120px; position: absolute; bottom: 50px; right: -30px;">.</span>
+      <div style="font-size: 160px; font-weight: 700; color: #1B1E24; line-height: 1; letter-spacing: -4px; position: relative; margin-top: -40px;">
+        SM
       </div>
       
       <div id="emp-status-text" style="color: white; font-weight: 600; font-size: 1.1rem; margin-top: -30px; z-index: 10;">
@@ -238,6 +230,27 @@
         <button onclick="closeModal('punch-modal')" style="color: #93C5FD; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Cancel</button>
         <button id="punch-modal-confirm" onclick="handlePunch()" style="color: #4ADE80; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Confirm</button>
       </div>
+    </div>
+  </div>
+
+  <div id="view-emp-camera" class="app-layout hidden" style="background: #020617; color: white; position: relative;">
+    <div class="app-header" style="padding: 16px 20px;">
+      <button onclick="cancelEmployeeCamera()" style="background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer;">Cancel</button>
+      <div class="font-bold">Capture Selfie</div>
+      <div style="width: 52px;"></div>
+    </div>
+    <div class="app-main flex flex-col" style="padding: 20px; gap: 16px; justify-content: center;">
+      <div style="background: #111827; border-radius: 20px; overflow: hidden; aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center;">
+        <video id="emp-camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <img id="emp-camera-preview" alt="Selfie preview" class="hidden" style="width: 100%; height: 100%; object-fit: cover;">
+      </div>
+      <div id="emp-camera-error" class="error-msg hidden" style="text-align: center;"></div>
+      <div class="text-center text-sm" style="color: #94A3B8;">Camera and GPS are both required before attendance is saved.</div>
+    </div>
+    <div style="padding: 20px; display: flex; gap: 12px;">
+      <button id="btn-retake-selfie" onclick="retakeEmployeeSelfie()" class="hidden" style="flex: 1; background: #1F2937; color: white; border: none; border-radius: 12px; height: 52px; cursor: pointer;">Retake</button>
+      <button id="btn-capture-selfie" onclick="captureEmployeeSelfie()" class="btn-primary" style="flex: 1;">Capture</button>
+      <button id="btn-submit-punch" onclick="submitEmployeePunch()" class="hidden btn-primary" style="flex: 1;">Submit Punch</button>
     </div>
   </div>
 
@@ -502,5 +515,14 @@
   <script src="js/auth.js"></script>
   <script src="js/attendance.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch((err) => {
+          console.log('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

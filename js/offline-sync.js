@@ -13,13 +13,6 @@ const OfflineSync = {
     queue.push({ ...record, _queuedAt: new Date().toISOString() });
     localStorage.setItem(this.QUEUE_KEY, JSON.stringify(queue));
     console.log(`[OfflineSync] Record queued. Queue size: ${queue.length}`);
-
-    // Register background sync if browser supports it
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      navigator.serviceWorker.ready
-        .then(reg => reg.sync.register('sync-attendance'))
-        .catch(err => console.warn('[OfflineSync] BG sync register failed:', err));
-    }
   },
 
   // ─── GET QUEUE ────────────────────────────────────────────────────────────

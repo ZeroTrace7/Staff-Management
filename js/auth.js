@@ -1,45 +1,91 @@
 /**
- * Auth Module — js/auth.js
- * v1.1 — Fixes bootstrap deadlock, adds admin-created employee provisioning,
- *         role-aware routing after sign-in
+ * Auth Module
+ * Handles owner bootstrap, admin-led employee provisioning, and role-aware auth.
  */
 
 const Auth = {
+  PENDING_OWNER_KEY: 'sm_pending_owner_bootstrap',
 
-  // ─── SIGN UP OWNER (first-admin bootstrap) ────────────────────────────────
-  // Flow: signUp auth → insert company → insert own profile
-  // Works because RLS now has:
-  //   - "Authenticated users can create companies" (INSERT on companies)
-  //   - "Users can insert their own profile" (INSERT on users WHERE id = auth.uid())
+  _createIsolatedClient() {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    });
+  },
+
+  _savePendingOwnerBootstrap(email, companyName) {
+    localStorage.setItem(this.PENDING_OWNER_KEY, JSON.stringify({
+      email,
+      companyName
+    }));
+  },
+
+  _loadPendingOwnerBootstrap() {
+    try {
+      const raw = localStorage.getItem(this.PENDING_OWNER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  _clearPendingOwnerBootstrap() {
+    localStorage.removeItem(this.PENDING_OWNER_KEY);
+  },
+
   async signUpOwner(email, password, companyName) {
     try {
-      // 1. Create auth user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password
       });
       if (authError) throw authError;
+      if (!authData.user) throw new Error('Signup failed. No user was created.');
 
-      // Supabase may return user but require email confirmation
-      if (!authData.user) throw new Error('Signup failed — no user returned.');
-      const userId = authData.user.id;
+      this._savePendingOwnerBootstrap(email, companyName);
 
-      // 2. If email confirmation is required, session won't exist yet
-      // We need to wait for auto-confirm or handle the flow
       if (!authData.session) {
-        // Email confirmation is ON — user must verify first
         return {
           success: true,
           needsConfirmation: true,
-          message: 'Check your email to confirm your account, then sign in.'
+          message: 'Confirm the email, then sign in to finish workspace setup.'
         };
       }
 
-      // 3. Insert company (allowed by "Authenticated users can create companies")
+      return await this.completeOwnerBootstrap(companyName, authData.user.email || email);
+    } catch (err) {
+      console.error('[Auth] signUpOwner error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  async completeOwnerBootstrap(companyName, ownerEmail) {
+    try {
+      const session = await this.getSession();
+      if (!session) {
+        throw new Error('You must be signed in to finish setup.');
+      }
+
+      const existingProfile = await this.getProfile();
+      if (existingProfile) {
+        this._clearPendingOwnerBootstrap();
+        return { success: true, profile: existingProfile };
+      }
+
+      const userId = session.user.id;
+      const email = ownerEmail || session.user.email;
+      const trimmedCompany = (companyName || '').trim();
+      if (!trimmedCompany) {
+        throw new Error('Company name is required to finish setup.');
+      }
+
       const { data: company, error: companyError } = await supabase
         .from('companies')
         .insert({
-          name: companyName,
+          name: trimmedCompany,
           admin_ids: [userId],
           geofence_lat: 0,
           geofence_lng: 0,
@@ -49,30 +95,28 @@ const Auth = {
         .single();
       if (companyError) throw companyError;
 
-      // 4. Insert own profile (allowed by "Users can insert their own profile")
-      const { error: userError } = await supabase
+      const { data: profile, error: userError } = await supabase
         .from('users')
         .insert({
           id: userId,
           company_id: company.id,
-          name: companyName + ' Admin',
+          name: `${trimmedCompany} Admin`,
           email,
           role: 'admin'
-        });
+        })
+        .select()
+        .single();
       if (userError) throw userError;
 
-      console.log('[Auth] Owner signup successful:', userId);
-      return { success: true, user: authData.user, companyId: company.id };
+      this._clearPendingOwnerBootstrap();
+      console.log('[Auth] Owner bootstrap complete:', userId);
+      return { success: true, profile, company };
     } catch (err) {
-      console.error('[Auth] signUpOwner error:', err.message);
+      console.error('[Auth] completeOwnerBootstrap error:', err.message);
       return { success: false, error: err.message };
     }
   },
 
-  // ─── PROVISION EMPLOYEE (called by admin from dashboard) ──────────────────
-  // Admin creates auth user + profile in one call
-  // Note: Supabase anon key can't use admin.createUser(), so we create a
-  // temporary signup, then the admin inserts the profile row.
   async provisionEmployee(employeeEmail, employeePassword, employeeName) {
     try {
       const adminProfile = await this.getProfile();
@@ -80,61 +124,63 @@ const Auth = {
         throw new Error('Only admins can add employees.');
       }
 
-      // 1. Create the employee's auth account
-      //    We sign them up, which creates auth.users entry
-      //    Then immediately sign back in as admin
-      const currentSession = await this.getSession();
-
-      const { data: empAuth, error: empAuthErr } = await supabase.auth.signUp({
+      const isolatedClient = this._createIsolatedClient();
+      const { data: authData, error: authError } = await isolatedClient.auth.signUp({
         email: employeeEmail,
         password: employeePassword
       });
-      if (empAuthErr) throw empAuthErr;
-      if (!empAuth.user) throw new Error('Employee auth creation failed.');
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Employee auth account was not created.');
 
-      // 2. Re-authenticate as admin (signUp above may have changed the session)
-      if (currentSession) {
-        await supabase.auth.setSession({
-          access_token: currentSession.access_token,
-          refresh_token: currentSession.refresh_token
-        });
-      }
-
-      // 3. Insert employee profile (allowed by "Admins can insert users in their company")
-      const { error: profileErr } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .insert({
-          id: empAuth.user.id,
+          id: authData.user.id,
           company_id: adminProfile.company_id,
           name: employeeName,
           email: employeeEmail,
           role: 'employee'
-        });
-      if (profileErr) throw profileErr;
+        })
+        .select()
+        .single();
+      if (profileError) throw profileError;
 
-      console.log('[Auth] Employee provisioned:', employeeName, employeeEmail);
-      return { success: true, employeeId: empAuth.user.id };
+      await isolatedClient.auth.signOut();
+
+      console.log('[Auth] Employee provisioned:', employeeEmail);
+      return {
+        success: true,
+        employee: profile,
+        needsConfirmation: !authData.session
+      };
     } catch (err) {
       console.error('[Auth] provisionEmployee error:', err.message);
       return { success: false, error: err.message };
     }
   },
 
-  // ─── SIGN IN (role-aware — returns profile with role) ─────────────────────
   async signIn(email, password) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Fetch profile to get role
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('role, company_id, name, id')
-        .eq('id', data.user.id)
-        .single();
-      if (profileError) throw profileError;
+      let profile = await this.getProfile();
+      if (!profile) {
+        const pending = this._loadPendingOwnerBootstrap();
+        if (pending && pending.email === (data.user.email || email)) {
+          const bootstrap = await this.completeOwnerBootstrap(pending.companyName, data.user.email || email);
+          if (!bootstrap.success) {
+            throw new Error(bootstrap.error);
+          }
+          profile = bootstrap.profile || await this.getProfile();
+        }
+      }
 
-      console.log('[Auth] Signed in as:', profile.role, '—', profile.name);
+      if (!profile) {
+        throw new Error('Account profile not found. Ask the owner to finish setup.');
+      }
+
+      console.log('[Auth] Signed in as:', profile.role);
       return { success: true, user: data.user, profile };
     } catch (err) {
       console.error('[Auth] signIn error:', err.message);
@@ -142,20 +188,17 @@ const Auth = {
     }
   },
 
-  // ─── SIGN OUT ────────────────────────────────────────────────────────────
   async signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) console.error('[Auth] signOut error:', error.message);
     window.location.href = 'index.html';
   },
 
-  // ─── GET SESSION ─────────────────────────────────────────────────────────
   async getSession() {
     const { data: { session } } = await supabase.auth.getSession();
     return session;
   },
 
-  // ─── GET PROFILE ─────────────────────────────────────────────────────────
   async getProfile() {
     const session = await this.getSession();
     if (!session) return null;
@@ -164,13 +207,46 @@ const Auth = {
       .from('users')
       .select('*')
       .eq('id', session.user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[Auth] getProfile error:', error.message);
+      return null;
+    }
+    return data || null;
+  },
+
+  async getCompany(companyId) {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('id', companyId)
       .single();
 
-    if (error) { console.error('[Auth] getProfile error:', error.message); return null; }
+    if (error) {
+      console.error('[Auth] getCompany error:', error.message);
+      return null;
+    }
     return data;
   },
 
-  // ─── ROUTE GUARD ─────────────────────────────────────────────────────────
+  async updateCompanySettings(companyId, payload) {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .update(payload)
+        .eq('id', companyId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, company: data };
+    } catch (err) {
+      console.error('[Auth] updateCompanySettings error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
   async requireAuth(expectedRole) {
     const session = await this.getSession();
     if (!session) {
@@ -185,7 +261,6 @@ const Auth = {
     }
 
     if (expectedRole && profile.role !== expectedRole) {
-      // Role mismatch — redirect to the correct portal
       if (profile.role === 'admin') window.location.href = 'owner.html';
       else if (profile.role === 'employee') window.location.href = 'employee.html';
       else window.location.href = 'index.html';
