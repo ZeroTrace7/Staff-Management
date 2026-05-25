@@ -365,48 +365,60 @@ function checkAllPermissions() {
 // Employee Punch Logic
 let isPunchedIn = false;
 
-function handlePunch() {
+async function handlePunch() {
   closeModal('punch-modal');
-  isPunchedIn = !isPunchedIn;
-  
-  const banner = document.getElementById('emp-top-banner');
-  const statusText = document.getElementById('emp-status-text');
-  const btnPunch = document.getElementById('btn-punch');
-  const modalTitle = document.getElementById('punch-modal-title');
-  const modalDesc = document.getElementById('punch-modal-desc');
+
+  const banner      = document.getElementById('emp-top-banner');
+  const statusText  = document.getElementById('emp-status-text');
+  const btnPunch    = document.getElementById('btn-punch');
+  const modalTitle  = document.getElementById('punch-modal-title');
+  const modalDesc   = document.getElementById('punch-modal-desc');
   const modalConfirm = document.getElementById('punch-modal-confirm');
-  
+
+  // Show loading state
+  if (btnPunch) { btnPunch.disabled = true; btnPunch.textContent = '⏳ Processing…'; }
+  if (banner) { banner.textContent = 'Getting your location…'; banner.style.background = '#1E3A5F'; }
+
+  // Call real Attendance module (camera video element = null for now until camera UI is built)
+  const result = isPunchedIn
+    ? await Attendance.clockOut(null)
+    : await Attendance.clockIn(null);
+
+  if (btnPunch) btnPunch.disabled = false;
+
+  if (!result.success) {
+    // Show error in banner
+    if (banner) {
+      banner.textContent = `❌ ${result.error}`;
+      banner.style.background = '#7F1D1D';
+    }
+    if (statusText) statusText.textContent = 'Something went wrong. Try again.';
+    return;
+  }
+
+  // Toggle state on success
+  isPunchedIn = !isPunchedIn;
+  const offlineSuffix = result.offline ? ' (saved offline)' : '';
+
   if (isPunchedIn) {
     if (banner) {
-      banner.innerText = 'Attendance marked successfully for today';
-      banner.style.background = '#065F46'; // dark green
+      banner.textContent = `✅ Attendance marked successfully${offlineSuffix}`;
+      banner.style.background = '#065F46';
     }
-    if (statusText) statusText.innerText = 'You have successfully logged in!';
-    if (btnPunch) {
-      btnPunch.innerText = 'Punch OUT';
-      btnPunch.style.background = '#EF4444'; // red
-    }
-    if (modalTitle) {
-      modalTitle.innerText = 'Punching OUT?';
-      modalTitle.style.color = '#EF4444';
-    }
-    if (modalDesc) modalDesc.innerText = 'Are you sure you want to punch OUT?';
+    if (statusText) statusText.textContent = 'You have successfully logged in!';
+    if (btnPunch) { btnPunch.textContent = 'Punch OUT'; btnPunch.style.background = '#EF4444'; }
+    if (modalTitle) { modalTitle.textContent = 'Punching OUT?'; modalTitle.style.color = '#EF4444'; }
+    if (modalDesc) modalDesc.textContent = 'Are you sure you want to punch OUT?';
     if (modalConfirm) modalConfirm.style.color = '#EF4444';
   } else {
     if (banner) {
-      banner.innerText = 'You have successfully logged off for today';
-      banner.style.background = '#374151'; // gray
+      banner.textContent = `You have successfully logged off${offlineSuffix}`;
+      banner.style.background = '#374151';
     }
-    if (statusText) statusText.innerText = 'You have successfully logged off!';
-    if (btnPunch) {
-      btnPunch.innerText = 'Punch IN';
-      btnPunch.style.background = '#4ADE80'; // green
-    }
-    if (modalTitle) {
-      modalTitle.innerText = 'Punching IN?';
-      modalTitle.style.color = '#4ADE80';
-    }
-    if (modalDesc) modalDesc.innerText = 'Are you sure you want to punch IN?';
+    if (statusText) statusText.textContent = 'You have successfully logged off!';
+    if (btnPunch) { btnPunch.textContent = 'Punch IN'; btnPunch.style.background = '#4ADE80'; }
+    if (modalTitle) { modalTitle.textContent = 'Punching IN?'; modalTitle.style.color = '#4ADE80'; }
+    if (modalDesc) modalDesc.textContent = 'Are you sure you want to punch IN?';
     if (modalConfirm) modalConfirm.style.color = '#4ADE80';
   }
 }
