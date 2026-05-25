@@ -152,6 +152,12 @@ function clearAuthError(containerId) {
   el.classList.add('hidden');
 }
 
+function toggleOwnerConfirmationResend(show) {
+  const btn = document.getElementById('btn-resend-owner-confirmation');
+  if (!btn) return;
+  btn.classList.toggle('hidden', !show);
+}
+
 function showStartupError(message) {
   showAuthError('owner-auth-error', message);
   showAuthError('emp-auth-error', message);
@@ -175,6 +181,7 @@ async function handleOwnerAuth() {
   const isSignUp = document.getElementById('owner-signup-toggle')?.checked;
 
   clearAuthError('owner-auth-error');
+  toggleOwnerConfirmationResend(false);
   if (!email || !password) {
     return showAuthError('owner-auth-error', 'Email and password are required.');
   }
@@ -205,10 +212,12 @@ async function handleOwnerAuth() {
   }
 
   if (!result.success) {
+    toggleOwnerConfirmationResend(result.error === 'Check your email and confirm your account before signing in.');
     return showAuthError('owner-auth-error', result.error);
   }
 
   if (result.needsConfirmation) {
+    toggleOwnerConfirmationResend(true);
     return showAuthError('owner-auth-error', result.message);
   }
 
@@ -220,6 +229,33 @@ async function handleOwnerAuth() {
   selectedRole = 'business';
   navigateTo('view-dashboard');
   await initializeOwnerExperience();
+}
+
+async function handleResendOwnerConfirmation() {
+  const email = document.getElementById('owner-email')?.value?.trim();
+  const company = document.getElementById('owner-company')?.value?.trim();
+  const btn = document.getElementById('btn-resend-owner-confirmation');
+
+  clearAuthError('owner-auth-error');
+  if (!email) {
+    toggleOwnerConfirmationResend(false);
+    return showAuthError('owner-auth-error', 'Email is required.');
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+  }
+
+  const result = await Auth.resendOwnerConfirmation(email, company);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Resend confirmation email';
+  }
+
+  toggleOwnerConfirmationResend(!result.success);
+  return showAuthError('owner-auth-error', result.success ? result.message : result.error);
 }
 
 async function handleEmployeeAuth() {

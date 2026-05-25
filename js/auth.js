@@ -65,7 +65,7 @@ const Auth = {
       });
       if (authError) throw authError;
       if (!authData.user) {
-        throw new Error('Signup was not completed. This email may already be registered, or signup is disabled in Supabase. If this is your email, uncheck "Creating a new account" and sign in.');
+        throw new Error('An account with this email already exists. Sign in instead.');
       }
 
       this._savePendingOwnerBootstrap(email, companyName);
@@ -74,7 +74,7 @@ const Auth = {
         return {
           success: true,
           needsConfirmation: true,
-          message: 'Confirm the email, then sign in to finish workspace setup.'
+          message: 'Check your email and confirm your account before signing in.'
         };
       }
 
@@ -183,6 +183,32 @@ const Auth = {
       };
     } catch (err) {
       console.error('[Auth] provisionEmployee error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  async resendOwnerConfirmation(email, companyName) {
+    try {
+      const trimmedEmail = (email || '').trim();
+      if (!trimmedEmail) throw new Error('Email is required.');
+
+      if (companyName) {
+        this._savePendingOwnerBootstrap(trimmedEmail, companyName);
+      }
+
+      const client = this._requireClient();
+      const { error } = await client.auth.resend({
+        type: 'signup',
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: this._getEmailRedirectUrl('owner.html')
+        }
+      });
+      if (error) throw error;
+
+      return { success: true, message: 'Confirmation email sent. Check your inbox.' };
+    } catch (err) {
+      console.error('[Auth] resendOwnerConfirmation error:', err.message);
       return { success: false, error: err.message };
     }
   },
