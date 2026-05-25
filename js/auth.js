@@ -53,6 +53,20 @@ const Auth = {
     return new URL(pageName, window.location.origin).toString();
   },
 
+  async _getFreshAccessToken() {
+    const client = this._requireClient();
+    let { data: { session } } = await client.auth.getSession();
+    const expiresAtMs = Number(session?.expires_at || 0) * 1000;
+    const expiresSoon = expiresAtMs && expiresAtMs - Date.now() < 60000;
+
+    if (!session?.access_token || expiresSoon) {
+      const refreshed = await client.auth.refreshSession();
+      session = refreshed.data?.session || session;
+    }
+
+    return session?.access_token || '';
+  },
+
   _createUuid() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
       return window.crypto.randomUUID();
@@ -167,17 +181,14 @@ const Auth = {
         throw new Error('Only admins can add employees.');
       }
 
-      const client = this._requireClient();
-      const { data: { session } } = await client.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Please sign in again.');
-      }
+      let accessToken = await this._getFreshAccessToken();
+      if (!accessToken) throw new Error('Your session expired. Sign out and sign in again.');
 
-      const response = await fetch('/api/create-employee', {
+      let response = await fetch('/api/create-employee', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({
           name: employeeName,
@@ -186,7 +197,26 @@ const Auth = {
         })
       });
 
-      const payload = await response.json().catch(() => ({}));
+      let payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        accessToken = await this._getFreshAccessToken();
+        if (accessToken) {
+          response = await fetch('/api/create-employee', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              name: employeeName,
+              email: employeeEmail,
+              password: employeePassword
+            })
+          });
+          payload = await response.json().catch(() => ({}));
+        }
+      }
+
       if (!response.ok || !payload.success) {
         throw new Error(payload.error || 'Employee account could not be created.');
       }

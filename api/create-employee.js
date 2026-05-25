@@ -72,7 +72,11 @@ module.exports = async function handler(req, res) {
 
   const { data: authUser, error: authUserError } = await adminClient.auth.getUser(token);
   if (authUserError || !authUser?.user) {
-    return send(res, 401, { error: 'Please sign in again.' });
+    const message = String(authUserError?.message || '');
+    if (message.toLowerCase().includes('api key')) {
+      return send(res, 500, { error: 'Employee creation is not configured correctly on the server.' });
+    }
+    return send(res, 401, { error: 'Your session expired. Sign out and sign in again.' });
   }
 
   const { data: adminProfile, error: adminProfileError } = await adminClient
@@ -103,6 +107,18 @@ module.exports = async function handler(req, res) {
       createdUser = await findAuthUserByEmail(adminClient, employeeEmail);
       if (!createdUser) {
         return send(res, 409, { error: 'An employee with this email already exists.' });
+      }
+      const { error: updateExistingError } = await adminClient.auth.admin.updateUserById(createdUser.id, {
+        password: employeePassword,
+        email_confirm: true,
+        user_metadata: {
+          name: employeeName,
+          role: 'employee',
+          company_id: adminProfile.company_id
+        }
+      });
+      if (updateExistingError) {
+        return send(res, 400, { error: updateExistingError.message });
       }
     } else {
       return send(res, 400, { error: message });

@@ -152,6 +152,24 @@ function clearAuthError(containerId) {
   el.classList.add('hidden');
 }
 
+function showStatusMessage(containerId, message) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+  el.classList.remove('status-pop');
+  void el.offsetWidth;
+  el.classList.add('status-pop');
+}
+
+function clearStatusMessage(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.textContent = '';
+  el.classList.add('hidden');
+  el.classList.remove('status-pop');
+}
+
 function toggleOwnerConfirmationResend(show) {
   const btn = document.getElementById('btn-resend-owner-confirmation');
   if (!btn) return;
@@ -284,7 +302,10 @@ async function handleEmployeeAuth() {
   }
 
   if (!result.success) {
-    return showAuthError('emp-auth-error', result.error);
+    const message = String(result.error || '').toLowerCase().includes('invalid login credentials')
+      ? 'Check the email and temporary password from your owner.'
+      : result.error;
+    return showAuthError('emp-auth-error', message);
   }
 
   if (result.profile?.role === 'admin') {
@@ -308,6 +329,7 @@ async function initializeOwnerExperience() {
 
 async function handleAddEmployee() {
   clearAuthError('add-employee-error');
+  clearStatusMessage('add-employee-success');
 
   const name = document.getElementById('add-employee-name')?.value?.trim();
   const email = document.getElementById('add-employee-email')?.value?.trim();
@@ -331,15 +353,21 @@ async function handleAddEmployee() {
   }
 
   if (!result.success) {
+    clearStatusMessage('add-employee-success');
     return showAuthError('add-employee-error', result.error);
   }
+
+  showStatusMessage('add-employee-success', `${result.employee?.name || name} added successfully. They can sign in with the email and temporary password.`);
 
   ['add-employee-name', 'add-employee-email', 'add-employee-password'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  closeModal('add-employee-modal');
   await AdminDashboard.refresh();
+  setTimeout(() => {
+    closeModal('add-employee-modal');
+    clearStatusMessage('add-employee-success');
+  }, 1400);
 }
 
 async function useCurrentLocationForGeofence() {
