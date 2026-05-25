@@ -1,23 +1,8 @@
-// Supabase Initialization
-// Note: You must replace these with your actual Supabase URL and Anon Key
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_URL = 'https://xmkqznceprpvibovzcnf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhta3F6bmNlcHJwdmlib3Z6Y25mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcxNDksImV4cCI6MjA5NTI4MzE0OX0.FuhNT9djV5nKyicQbSwEB4ViodghZFiU7EUzrF96CXo';
 
-// We will use the UMD build of Supabase from CDN in index.html
-// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+// Initialize Supabase client using the UMD CDN build
+// The CDN exposes window.supabase = { createClient }
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let supabase = null;
-
-function initSupabase() {
-    if (typeof supabaseClient !== 'undefined') {
-        supabase = supabaseClient;
-    } else if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('[Supabase] Initialized');
-    } else {
-        console.warn('[Supabase] SDK not loaded. App will run in offline/mock mode.');
-    }
-}
-
-// Call init on load
-initSupabase();
+console.log('[Supabase] Client initialized for project: xmkqznceprpvibovzcnf');

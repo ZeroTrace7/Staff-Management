@@ -163,6 +163,7 @@ function selectRole(role) {
   }
 }
 
+// ─── STEP 1: Role Selection → Route to correct auth flow ─────────────────
 function handleStep1Continue() {
   if (selectedRole === 'employee') {
     window.location.href = 'employee.html';
@@ -170,6 +171,79 @@ function handleStep1Continue() {
     window.location.href = 'owner.html';
   }
 }
+
+// ─── UI Helper: show inline auth errors ──────────────────────────────────
+function showAuthError(containerId, message) {
+  let el = document.getElementById(containerId);
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+}
+function clearAuthError(containerId) {
+  let el = document.getElementById(containerId);
+  if (el) { el.textContent = ''; el.classList.add('hidden'); }
+}
+
+// ─── OWNER AUTH: Sign in OR sign up on Step 2 form submit ────────────────
+async function handleOwnerAuth() {
+  const email    = document.getElementById('owner-email')?.value?.trim();
+  const password = document.getElementById('owner-password')?.value;
+  const company  = document.getElementById('owner-company')?.value?.trim();
+  const isSignUp = document.getElementById('owner-signup-toggle')?.checked;
+
+  clearAuthError('owner-auth-error');
+
+  if (!email || !password) {
+    return showAuthError('owner-auth-error', 'Email and password are required.');
+  }
+
+  const btn = document.getElementById('btn-owner-auth');
+  if (btn) { btn.disabled = true; btn.textContent = 'Please wait…'; }
+
+  let result;
+  if (isSignUp) {
+    if (!company) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+      return showAuthError('owner-auth-error', 'Company name is required for sign up.');
+    }
+    result = await Auth.signUpOwner(email, password, company);
+  } else {
+    result = await Auth.signIn(email, password);
+  }
+
+  if (!result.success) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+    return showAuthError('owner-auth-error', result.error);
+  }
+
+  // Success → go to dashboard
+  navigateTo('view-dashboard');
+}
+
+// ─── EMPLOYEE AUTH: Sign in OR sign up on Step 2 form submit ─────────────
+async function handleEmployeeAuth() {
+  const email    = document.getElementById('emp-email')?.value?.trim();
+  const password = document.getElementById('emp-password')?.value;
+
+  clearAuthError('emp-auth-error');
+
+  if (!email || !password) {
+    return showAuthError('emp-auth-error', 'Email and password are required.');
+  }
+
+  const btn = document.getElementById('btn-emp-auth');
+  if (btn) { btn.disabled = true; btn.textContent = 'Please wait…'; }
+
+  const result = await Auth.signIn(email, password);
+
+  if (!result.success) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+    return showAuthError('emp-auth-error', result.error);
+  }
+
+  navigateTo('view-emp-dashboard');
+}
+
 
 function validateEmpStep2() {
   let isValid = true;
@@ -210,19 +284,43 @@ document.querySelectorAll('.switch').forEach(el => {
   });
 });
 
-// Initialize first view animation
-document.addEventListener('DOMContentLoaded', () => {
-   let firstView = document.getElementById('view-step1');
-   if (window.location.pathname.endsWith('owner.html')) {
-       firstView = document.getElementById('view-step2');
-   } else if (window.location.pathname.endsWith('employee.html')) {
-       firstView = document.getElementById('view-emp-step2');
-   }
-   if(firstView) {
-      firstView.classList.remove('hidden');
-      firstView.classList.add('view-enter');
-   }
+// Initialize first view animation + session-aware routing
+document.addEventListener('DOMContentLoaded', async () => {
+  const path = window.location.pathname;
+  const isOwnerPage    = path.endsWith('owner.html');
+  const isEmployeePage = path.endsWith('employee.html');
+
+  // ── Route Guard: check if already logged in ───────────────────────────
+  if (isOwnerPage || isEmployeePage) {
+    const session = await Auth.getSession();
+    if (session) {
+      const profile = await Auth.getProfile();
+      if (profile) {
+        // Restore session — skip onboarding, jump to dashboard
+        console.log('[App] Existing session found for:', profile.name, '|', profile.role);
+        if (isOwnerPage && profile.role === 'admin') {
+          navigateTo('view-dashboard');
+          return;
+        }
+        if (isEmployeePage && profile.role === 'employee') {
+          navigateTo('view-emp-dashboard');
+          return;
+        }
+      }
+    }
+  }
+
+  // ── No session: show the first onboarding step ───────────────────────
+  let firstView = document.getElementById('view-step1');
+  if (isOwnerPage)    firstView = document.getElementById('view-step2');
+  if (isEmployeePage) firstView = document.getElementById('view-emp-step2');
+
+  if (firstView) {
+    firstView.classList.remove('hidden');
+    firstView.classList.add('view-enter');
+  }
 });
+
 
 // Employee Permissions Logic
 let empPermissions = {
