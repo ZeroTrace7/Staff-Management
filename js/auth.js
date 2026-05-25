@@ -7,10 +7,13 @@ const Auth = {
   PENDING_OWNER_KEY: 'sm_pending_owner_bootstrap',
 
   _requireClient() {
-    if (!supabase) {
+    if (!window.staffSupabaseClient) {
       throw new Error('Backend connection is unavailable. Refresh and try again.');
     }
-    return supabase;
+    if (!window.staffSupabaseClient.auth) {
+      throw new Error('Backend client is not initialized correctly. Refresh and try again.');
+    }
+    return window.staffSupabaseClient;
   },
 
   _createIsolatedClient() {

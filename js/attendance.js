@@ -98,7 +98,7 @@ const Attendance = {
   },
 
   async _insertOrQueue(record) {
-    const { error } = await supabase.from('attendance_logs').insert(record);
+    const { error } = await getSupabaseClient().from('attendance_logs').insert(record);
     if (!error) {
       return { success: true, offline: false, record };
     }
@@ -144,7 +144,7 @@ const Attendance = {
   },
 
   async _updateLastKnownLocation(profile, posData) {
-    await supabase.from('last_known_locations').upsert({
+    await getSupabaseClient().from('last_known_locations').upsert({
       user_id: profile.id,
       company_id: profile.company_id,
       lat: posData.lat,
@@ -159,7 +159,7 @@ const Attendance = {
     if (!profile) return [];
 
     const range = this._getLocalDayRange();
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('attendance_logs')
       .select('*')
       .eq('user_id', profile.id)

@@ -78,7 +78,7 @@ const CameraService = {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // safe filename
     const filePath  = `${companyId}/${userId}/${timestamp}.jpg`;
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await getSupabaseClient().storage
       .from('selfies')
       .upload(filePath, blob, {
         contentType: 'image/jpeg',
@@ -91,7 +91,7 @@ const CameraService = {
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = getSupabaseClient().storage
       .from('selfies')
       .getPublicUrl(filePath);
 

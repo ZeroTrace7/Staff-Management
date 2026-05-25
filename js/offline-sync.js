@@ -54,7 +54,7 @@ const OfflineSync = {
       const { _queuedAt, _syncedAt, ...cleanRecord } = record;
       cleanRecord.synced_offline = true; // Mark as synced from queue
 
-      const { error } = await supabase.from('attendance_logs').insert(cleanRecord);
+      const { error } = await getSupabaseClient().from('attendance_logs').insert(cleanRecord);
       if (error) {
         console.error('[OfflineSync] Failed to sync record:', error.message);
         remaining.push(record);

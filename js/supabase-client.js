@@ -11,11 +11,11 @@ const SUPABASE_ANON_KEY =
   _cfg.supabaseAnonKey ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhta3F6bmNlcHJwdmlib3Z6Y25mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcxNDksImV4cCI6MjA5NTI4MzE0OX0.FuhNT9djV5nKyicQbSwEB4ViodghZFiU7EUzrF96CXo';
 
-let supabase = null;
+window.staffSupabaseClient = null;
 
 try {
   if (window.supabase && typeof window.supabase.createClient === 'function') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.staffSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('[Supabase] Client initialized.');
   } else {
     console.error('[Supabase] SDK failed to load.');
@@ -23,3 +23,12 @@ try {
 } catch (err) {
   console.error('[Supabase] Client initialization failed:', err.message);
 }
+
+function getSupabaseClient() {
+  if (!window.staffSupabaseClient) {
+    throw new Error('Backend connection is unavailable. Refresh and try again.');
+  }
+  return window.staffSupabaseClient;
+}
+
+window.getSupabaseClient = getSupabaseClient;

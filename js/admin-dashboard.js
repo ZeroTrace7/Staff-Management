@@ -43,7 +43,7 @@ const AdminDashboard = {
     const profile = await this._ensureProfile();
     if (!profile) return [];
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('users')
       .select('id, name, email, role, is_active, created_at')
       .eq('company_id', profile.company_id)
@@ -61,7 +61,7 @@ const AdminDashboard = {
     if (!profile) return [];
 
     const range = this._getLocalDayRange();
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('attendance_logs')
       .select('id, user_id, type, timestamp, is_geofence_valid, distance_from_office, synced_offline')
       .eq('company_id', profile.company_id)
@@ -80,7 +80,7 @@ const AdminDashboard = {
     const profile = await this._ensureProfile();
     if (!profile) return [];
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('last_known_locations')
       .select('user_id, lat, lng, accuracy_meters, updated_at')
       .eq('company_id', profile.company_id);
@@ -320,7 +320,7 @@ const AdminDashboard = {
   subscribeRealtime() {
     if (this._channel) return;
 
-    this._channel = supabase.channel('owner-live-attendance')
+    this._channel = getSupabaseClient().channel('owner-live-attendance')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
         this.refresh();
       })
