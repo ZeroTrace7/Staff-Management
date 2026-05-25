@@ -142,8 +142,9 @@ function closeModal(id) {
   }
 }
 
-// Step 1 Selection Cards
-let selectedRole = 'business';
+// Step 1 Selection Cards - selectedRole is declared per-page in a script block
+// (owner.html sets 'business', employee.html sets 'employee', index.html defaults to 'business')
+if (typeof selectedRole === 'undefined') { var selectedRole = 'business'; }
 
 function selectRole(role) {
   selectedRole = role;
