@@ -11,7 +11,7 @@
 </head>
 <body>
 
-  <!-- VIEW: EMPLOYEE STEP 2 -->
+  <!-- VIEW: EMPLOYEE LOGIN (Single step — employees are admin-created) -->
   <div id="view-emp-step2" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
     <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
       <div class="flex items-center gap-2">
@@ -28,58 +28,12 @@
         <div class="flex gap-2 mb-2">
           <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
           <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
-          <div style="height: 4px; flex: 1; background: #E5E7EB; border-radius: 4px;"></div>
-        </div>
-        <div class="text-xs text-muted mb-6">Step 2 of 3</div>
-
-        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px;">Enter your details</h1>
-        <p class="text-muted mb-6" style="font-size: 1rem; color: #4B5563;">Please provide your information below</p>
-
-        <div class="flex flex-col gap-4">
-          <div class="flex gap-3">
-            <div style="flex: 1;">
-              <input type="text" id="emp-fname" class="input" placeholder="First Name" style="border-radius: 12px; height: 3.5rem;">
-              <div id="err-fname" class="error-msg hidden">Please enter first na...</div>
-            </div>
-            <div style="flex: 1;">
-              <input type="text" id="emp-lname" class="input" placeholder="Last Name" style="border-radius: 12px; height: 3.5rem;">
-              <div id="err-lname" class="error-msg hidden">Please enter last na...</div>
-            </div>
-          </div>
-          <div>
-            <input type="text" id="emp-ccode" class="input w-full" placeholder="Company Code" style="border-radius: 12px; height: 3.5rem;">
-            <div id="err-ccode" class="error-msg hidden">Please enter company code</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="validateEmpStep2()" style="margin-top: 2rem;">Continue</button>
-    </div>
-  </div>
-
-  <!-- VIEW: EMPLOYEE STEP 3 -->
-  <div id="view-emp-step3" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
-    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
-      <div class="flex items-center gap-2">
-        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;" onclick="navigateTo('view-emp-step2')">←</span>
-        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">Staff Management<span class="brand-period">.</span></div>
-      </div>
-      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
-        <span>📞</span> Need Help?
-      </button>
-    </div>
-
-    <div class="app-main flex flex-col justify-between" style="padding: 0;">
-      <div>
-        <div class="flex gap-2 mb-2">
-          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
-          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
           <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
         </div>
-        <div class="text-xs text-muted mb-6">Step 3 of 3</div>
+        <div class="text-xs text-muted mb-6">Employee Sign In</div>
 
-        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px; color: #4B5563;">Almost there<span class="brand-period">.</span></h1>
-        <p class="text-muted mb-6" style="font-size: 0.95rem; color: #6B7280;">Enter your credentials to continue</p>
+        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px;">Welcome back<span class="brand-period">.</span></h1>
+        <p class="text-muted mb-6" style="font-size: 0.95rem; color: #6B7280;">Sign in with the credentials your admin provided</p>
 
         <div class="flex flex-col gap-4">
           <input type="email" id="emp-email" class="input w-full" placeholder="Email Address" style="border-radius: 12px; border: 1px solid #9CA3AF; height: 3.5rem;">
@@ -92,9 +46,10 @@
         </div>
       </div>
 
-      <button id="btn-emp-auth" class="btn-primary" onclick="handleEmployeeAuth()" style="margin-top: 2rem;">Continue</button>
+      <button id="btn-emp-auth" class="btn-primary" onclick="handleEmployeeAuth()" style="margin-top: 2rem;">Sign In</button>
     </div>
   </div>
+
 
   <!-- VIEW: EMPLOYEE PERMISSIONS -->
   <div id="view-emp-permissions" class="app-layout hidden" style="background: linear-gradient(180deg, #FCD34D 0%, #FEF3C7 100%); font-family: sans-serif;">

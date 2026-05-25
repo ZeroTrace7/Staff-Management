@@ -184,7 +184,7 @@ function clearAuthError(containerId) {
   if (el) { el.textContent = ''; el.classList.add('hidden'); }
 }
 
-// ─── OWNER AUTH: Sign in OR sign up on Step 2 form submit ────────────────
+// ─── OWNER AUTH: Sign in OR sign up ──────────────────────────────────────
 async function handleOwnerAuth() {
   const email    = document.getElementById('owner-email')?.value?.trim();
   const password = document.getElementById('owner-password')?.value;
@@ -211,16 +211,27 @@ async function handleOwnerAuth() {
     result = await Auth.signIn(email, password);
   }
 
+  if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+
   if (!result.success) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
     return showAuthError('owner-auth-error', result.error);
   }
 
-  // Success → go to dashboard
+  // Handle email confirmation requirement
+  if (result.needsConfirmation) {
+    return showAuthError('owner-auth-error', result.message);
+  }
+
+  // Role-aware redirect after sign-in
+  if (result.profile && result.profile.role === 'employee') {
+    window.location.href = 'employee.html';
+    return;
+  }
+
   navigateTo('view-dashboard');
 }
 
-// ─── EMPLOYEE AUTH: Sign in OR sign up on Step 2 form submit ─────────────
+// ─── EMPLOYEE AUTH: Sign in only (employees are admin-created) ───────────
 async function handleEmployeeAuth() {
   const email    = document.getElementById('emp-email')?.value?.trim();
   const password = document.getElementById('emp-password')?.value;
@@ -236,46 +247,25 @@ async function handleEmployeeAuth() {
 
   const result = await Auth.signIn(email, password);
 
+  if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
+
   if (!result.success) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Continue'; }
     return showAuthError('emp-auth-error', result.error);
+  }
+
+  // Role-aware redirect after sign-in
+  if (result.profile && result.profile.role === 'admin') {
+    window.location.href = 'owner.html';
+    return;
   }
 
   navigateTo('view-emp-dashboard');
 }
 
 
-function validateEmpStep2() {
-  let isValid = true;
-  
-  const fname = document.getElementById('emp-fname');
-  const lname = document.getElementById('emp-lname');
-  const ccode = document.getElementById('emp-ccode');
-  
-  // reset errors
-  document.querySelectorAll('#view-emp-step2 .error-msg').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('#view-emp-step2 .input-error').forEach(el => el.classList.remove('input-error'));
 
-  if (!fname.value.trim()) {
-    isValid = false;
-    fname.classList.add('input-error');
-    document.getElementById('err-fname').classList.remove('hidden');
-  }
-  if (!lname.value.trim()) {
-    isValid = false;
-    lname.classList.add('input-error');
-    document.getElementById('err-lname').classList.remove('hidden');
-  }
-  if (!ccode.value.trim()) {
-    isValid = false;
-    ccode.classList.add('input-error');
-    document.getElementById('err-ccode').classList.remove('hidden');
-  }
 
-  if (isValid) {
-    navigateTo('view-emp-step3');
-  }
-}
+
 
 // Interactive Switches
 document.querySelectorAll('.switch').forEach(el => {
