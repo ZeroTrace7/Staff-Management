@@ -21,10 +21,12 @@ Staff Management is a **Progressive Web App** that lets small teams (5–50 empl
 | Feature | Description |
 |---|---|
 | 📸 **Selfie Clock-In** | Front camera capture at clock-in, stored in Supabase Storage |
-| 📍 **GPS + Geofence** | High-accuracy GPS with multi-sample averaging, Haversine distance check |
+| 📍 **GPS Mandatory** | Clock-in is **BLOCKED** if GPS/location is turned off — no exceptions |
+| 📡 **Last Known Location** | Every app open logs employee location; admin sees "last seen at [place] at [time]" |
+| 🛡️ **Anti-Spoofing** | Detects fake GPS apps via jitter analysis, teleportation detection, consistency checks |
 | 🔐 **Email Auth** | Email + password login for both employees and admins (₹0 cost) |
 | 📊 **Admin Dashboard** | Today's stats — Present / Absent / Late / Not Marked |
-| 🗺️ **Map View** | Leaflet.js pins showing where each employee clocked in |
+| 🗺️ **Map View** | Leaflet.js pins showing where each employee clocked in + last known location |
 | 📱 **Installable PWA** | Add to Home Screen on Android (auto-prompt), basic iOS support |
 | 📴 **Offline Support** | Works without internet, syncs when connectivity returns |
 | 📅 **Attendance History** | Employee calendar view of personal attendance records |
@@ -111,6 +113,7 @@ is_geofence_valid   BOOLEAN
 distance_from_office FLOAT      -- meters, for admin review
 notes               TEXT
 synced_offline      BOOLEAN     DEFAULT false
+spoof_flags         JSONB       -- {jitter: bool, teleport: bool, consistency: bool}
 created_at          TIMESTAMPTZ DEFAULT now()
 
 -- Indexes
@@ -119,7 +122,22 @@ INDEX idx_attendance_company_id ON attendance_logs(company_id)
 INDEX idx_attendance_timestamp ON attendance_logs(timestamp)
 ```
 
-### `location_pings` (Phase 2 — Live Tracking)
+### `last_known_locations` (Phase 1 — Passive Tracking)
+```sql
+id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id         UUID        REFERENCES users(id) UNIQUE  -- one row per employee
+company_id      UUID        REFERENCES companies(id)
+lat             FLOAT       NOT NULL
+lng             FLOAT       NOT NULL
+accuracy_meters FLOAT
+updated_at      TIMESTAMPTZ DEFAULT now()  -- "last seen at" timestamp
+
+-- Indexes
+INDEX idx_last_location_user ON last_known_locations(user_id)
+INDEX idx_last_location_company ON last_known_locations(company_id)
+```
+
+### `location_pings` (Phase 2 — Live Tracking History)
 ```sql
 id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
 user_id         UUID        REFERENCES users(id)
@@ -155,25 +173,49 @@ CREATE POLICY "admins_company_access" ON attendance_logs
 
 ---
 
-## 📍 Geofence Accuracy Strategy
+## 📍 Location Tracking Strategy
 
-Since accuracy is critical, we use a multi-layer approach:
+Since knowing where employees are is critical, we use a 3-layer system:
+
+### Layer 1 — GPS Mandatory for Clock-In (Phase 1)
 
 | Technique | What it does |
 |---|---|
 | **`enableHighAccuracy: true`** | Forces GPS hardware (not cell tower fallback) |
 | **Multi-sample averaging** | Takes 3 GPS readings, averages lat/lng, uses best accuracy |
 | **Accuracy threshold** | Rejects any reading with accuracy > 150m (too unreliable) |
+| **GPS = Required** | If location services are OFF → clock-in is **BLOCKED** with a clear prompt |
 | **Haversine formula** | Calculates exact distance in meters between employee and office |
 | **Store raw accuracy** | Admin can see exactly how accurate each reading was |
 | **Distance logging** | Every clock-in stores `distance_from_office` in meters |
-| **Anti-spoofing: GPS jitter** | Real GPS has noise; faked GPS is constant — detectable |
-| **Anti-spoofing: speed check** | Flag if employee "teleports" (impossible distance in short time) |
 
-```
-Recommended geofence radius: 50–100 meters
-(with accuracy threshold of 150m, readings inside 100m are highly reliable)
-```
+### Layer 2 — Last Known Location Logging (Phase 1)
+
+| Technique | What it does |
+|---|---|
+| **App-open location ping** | Every time employee opens the app, location is silently captured |
+| **`last_known_location` table** | Stores latest lat/lng + timestamp per employee |
+| **Admin map view** | Owner can see "Last seen at [location] at [time]" for every employee |
+| **Battery-friendly** | Only captures on app open/foreground, no background drain |
+| **Graceful fallback** | If GPS denied at app-open, skips silently (only mandatory at clock-in) |
+
+### Layer 3 — Anti-Spoofing Detection (Phase 1)
+
+| Technique | What it does |
+|---|---|
+| **GPS jitter analysis** | Real GPS has noise (±5-15m); faked GPS returns identical coordinates — detectable |
+| **Teleportation detection** | Flags if employee "moves" impossibly fast between two readings (e.g., 50km in 2 min) |
+| **Consistency scoring** | If employee clocks in from same exact lat/lng every day (to 6 decimal places) → suspicious |
+| **Accuracy anomaly** | Mock GPS apps often report `accuracy: 0` or `accuracy: 1` — unnaturally perfect |
+| **Admin flag** | Suspicious readings get a ⚠️ badge in admin dashboard for manual review |
+
+### Phase 2 — Strict Enforcement (Future)
+
+| Feature | What it adds |
+|---|---|
+| **Geofence enforcement** | Clock-in rejected if outside office radius (not just flagged) |
+| **Selfie + GPS combo** | Both selfie AND location required together as tamper-proof pair |
+| **Geofence radius config** | Admin sets office radius (50-100m) from settings |
 
 ---
 
@@ -322,11 +364,15 @@ Employee clocks in with no internet
 
 | Phase | Feature | Status |
 |---|---|---|
-| **1** | Core attendance (selfie + GPS + geofence) | 🔨 Building |
+| **1** | Core attendance (selfie + GPS) | 🔨 Building |
+| **1** | GPS mandatory for clock-in (blocked if OFF) | 🔨 Building |
+| **1** | Last known location logging (app-open pings) | 🔨 Building |
+| **1** | Anti-spoofing (jitter + teleport + consistency) | 🔨 Building |
 | **1** | Email auth (admin + employee) | 🔨 Building |
 | **1** | Admin dashboard with stats + map | 🔨 Building |
 | **1** | PWA + offline sync (Android primary) | 🔨 Building |
-| **1** | Anti-spoofing (jitter + speed checks) | 🔨 Building |
+| **2** | Strict geofence enforcement (reject out-of-zone) | 📋 Planned |
+| **2** | Selfie + GPS combo verification (tamper-proof) | 📋 Planned |
 | **2** | iOS optimization (fallbacks, install guide) | 📋 Planned |
 | **2** | Phone OTP login (via Indian SMS provider) | 📋 Planned |
 | **2** | Leave management system | 📋 Planned |
