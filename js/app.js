@@ -207,14 +207,6 @@ function validateEmpStep2() {
 document.querySelectorAll('.switch').forEach(el => {
   el.addEventListener('click', () => {
     el.classList.toggle('active');
-    const thumb = el.querySelector('.switch-thumb');
-    if (el.classList.contains('active')) {
-       el.style.background = '#93C5FD';
-       if(thumb) thumb.style.background = '#1E3A8A';
-    } else {
-       el.style.background = '#374151'; // or whatever inactive bg
-       if(thumb) thumb.style.background = '#9CA3AF';
-    }
   });
 });
 
