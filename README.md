@@ -156,7 +156,9 @@ The queue currently lives in `localStorage`, so sync is client-driven on reconne
 
 ### 2. Configure the client
 
-Update [js/supabase-client.js](./js/supabase-client.js) with your Supabase project values.
+Copy `js/config.example.js` to `js/config.local.js` and put your real Supabase values there.
+
+`js/config.local.js` is ignored by git and should not be committed.
 
 ### 3. Auth recommendation
 
