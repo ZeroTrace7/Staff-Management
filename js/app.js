@@ -203,7 +203,10 @@ async function handleOwnerAuth() {
     }
     result = await Auth.signUpOwner(email, password, company);
   } else {
-    result = await Auth.signIn(email, password);
+    result = await Auth.signIn(email, password, {
+      allowOwnerBootstrap: true,
+      companyName: company
+    });
   }
 
   if (btn) {
@@ -655,8 +658,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!profile && isOwnerPage) {
           const pending = Auth._loadPendingOwnerBootstrap?.();
-          if (pending && pending.email === session.user.email) {
-            const bootstrap = await Auth.completeOwnerBootstrap(pending.companyName, session.user.email);
+          const companyName = pending?.email === session.user.email
+            ? pending.companyName
+            : session.user.user_metadata?.company_name;
+          if (companyName) {
+            const bootstrap = await Auth.completeOwnerBootstrap(companyName, session.user.email);
             if (!bootstrap.success) {
               showAuthError('owner-auth-error', bootstrap.error);
             }

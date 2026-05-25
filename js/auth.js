@@ -56,19 +56,28 @@ const Auth = {
   async signUpOwner(email, password, companyName) {
     try {
       const client = this._requireClient();
+      const trimmedEmail = (email || '').trim();
+      const trimmedCompany = (companyName || '').trim();
       const { data: authData, error: authError } = await client.auth.signUp({
-        email,
+        email: trimmedEmail,
         password,
         options: {
-          emailRedirectTo: this._getEmailRedirectUrl('owner.html')
+          emailRedirectTo: this._getEmailRedirectUrl('owner.html'),
+          data: {
+            company_name: trimmedCompany,
+            role: 'admin'
+          }
         }
       });
       if (authError) throw authError;
       if (!authData.user) {
-        throw new Error('An account with this email already exists. Sign in instead.');
+        throw new Error('This email is already registered. Sign in instead.');
+      }
+      if (Array.isArray(authData.user.identities) && authData.user.identities.length === 0) {
+        throw new Error('This email is already registered. Sign in instead.');
       }
 
-      this._savePendingOwnerBootstrap(email, companyName);
+      this._savePendingOwnerBootstrap(trimmedEmail, trimmedCompany);
 
       if (!authData.session) {
         return {
@@ -78,7 +87,7 @@ const Auth = {
         };
       }
 
-      return await this.completeOwnerBootstrap(companyName, authData.user.email || email);
+      return await this.completeOwnerBootstrap(trimmedCompany, authData.user.email || trimmedEmail);
     } catch (err) {
       console.error('[Auth] signUpOwner error:', err.message);
       return { success: false, error: err.message };
@@ -213,7 +222,7 @@ const Auth = {
     }
   },
 
-  async signIn(email, password) {
+  async signIn(email, password, options = {}) {
     try {
       const client = this._requireClient();
       const { data, error } = await client.auth.signInWithPassword({ email, password });
@@ -221,18 +230,27 @@ const Auth = {
 
       let profile = await this.getProfile();
       if (!profile) {
+        let bootstrapCompany = '';
         const pending = this._loadPendingOwnerBootstrap();
         if (pending && pending.email === (data.user.email || email)) {
-          const bootstrap = await this.completeOwnerBootstrap(pending.companyName, data.user.email || email);
+          bootstrapCompany = pending.companyName;
+        } else if (options.allowOwnerBootstrap) {
+          bootstrapCompany = options.companyName || data.user.user_metadata?.company_name || '';
+        }
+
+        if (bootstrapCompany) {
+          const bootstrap = await this.completeOwnerBootstrap(bootstrapCompany, data.user.email || email);
           if (!bootstrap.success) {
             throw new Error(bootstrap.error);
           }
           profile = bootstrap.profile || await this.getProfile();
+        } else if (options.allowOwnerBootstrap) {
+          throw new Error('Enter your company name to finish setup.');
         }
       }
 
       if (!profile) {
-        throw new Error('Account profile not found. Ask the owner to finish setup.');
+        throw new Error('Account setup is incomplete. Ask your admin to add your profile.');
       }
 
       console.log('[Auth] Signed in as:', profile.role);
