@@ -345,23 +345,20 @@ body {
 .stat-cell {
   position: relative;
   padding: 12px;
-  border-radius: 8px;
-  background: oklch(from var(--card) l c h / 0.5);
-  border-left: 3px solid var(--primary);
+  border-radius: 12px;
+  background: #1B1E24;
   display: flex;
   flex-direction: column;
+  border: none;
 }
-.stat-cell.orange { border-left-color: #F97316; }
-.stat-cell.green { border-left-color: #22C55E; }
-.stat-cell.red { border-left-color: #EF4444; }
-.stat-cell.blue { border-left-color: #3B82F6; }
-.stat-cell.yellow { border-left-color: #EAB308; }
-.stat-cell.purple { border-left-color: #A855F7; }
-.stat-cell.gray { border-left-color: var(--muted-foreground); }
-
-.stat-number { font-size: 1.25rem; font-weight: 700; color: var(--foreground); line-height: 1.2;}
-.stat-label { font-size: 0.7rem; color: var(--muted-foreground); line-height: 1.2; }
-.stat-category { font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px; }
+.stat-bar {
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+}
+.stat-number { font-size: 1.1rem; font-weight: 600; color: white; line-height: 1; }
+.stat-label { font-size: 0.75rem; color: #6B7280; line-height: 1; }
+.stat-category { font-size: 0.75rem; color: #9CA3AF; margin-top: 4px; font-weight: 500; }
 
 /* Settings List */
 .settings-list {
@@ -379,6 +376,7 @@ body {
   gap: 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .settings-item:last-child { border-bottom: none; }
 .settings-item-icon { font-size: 1.25rem; opacity: 0.7; width: 24px; text-align: center; }
@@ -387,3 +385,127 @@ body {
 
 /* Helpers */
 .hidden { display: none !important; }
+
+/* Selection Cards (Step 1) */
+.selection-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  border: 1px solid #D1D5DB;
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+.selection-card.active {
+  border: 2px solid #60A5FA;
+  background: #EFF6FF;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+.selection-card.inactive {
+  border: 1px solid #9CA3AF;
+  color: #111827;
+}
+.selection-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Custom Checkbox (Step 1) */
+.custom-checkbox {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #9CA3AF;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  margin-top: 2px;
+  background: white;
+  transition: all 0.2s ease;
+}
+.custom-checkbox:checked {
+  border-color: #60A5FA;
+}
+.custom-checkbox::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #60A5FA;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.custom-checkbox:checked::before {
+  transform: scale(1);
+}
+
+/* Primary Button (Step 1) */
+.btn-primary {
+  background: #2563EB;
+  color: white;
+  height: 3.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  background: #1D4FD8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* ── Micro-Animations & View Transitions ── */
+
+@keyframes fadeInSlideUp {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.view-enter {
+  animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-enter {
+  animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-exit {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+/* Interaction scales */
+.btn:active, .btn-primary:active, .selection-card:active, .settings-item:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+.bottom-nav-item .nav-icon {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-checkbox:active {
+  transform: scale(0.85);
+}

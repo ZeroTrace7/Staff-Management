@@ -61,203 +61,448 @@
       </div>
 
       <!-- Continue Button -->
+      <button class="btn btn-primary" onclick="navigateTo('view-step2')" style="margin-top: 2rem;">Continue</button>
+    </div>
+  </div>
+
+  <!-- VIEW: STEP 2 (Light Theme) -->
+  <div id="view-step2" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;" onclick="navigateTo('view-step1')">←</span>
+        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">Sun Associates<span class="brand-period">.</span></div>
+      </div>
+      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
+        <span>📞</span> Need Help?
+      </button>
+    </div>
+
+    <div class="app-main flex flex-col justify-between" style="padding: 0;">
+      <div>
+        <!-- Segmented Progress Bar -->
+        <div class="flex gap-2 mb-2">
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #E5E7EB; border-radius: 4px;"></div>
+        </div>
+        <div class="text-xs text-muted mb-6">Step 2 of 3</div>
+
+        <!-- Headings -->
+        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px;">Enter your details</h1>
+        <p class="text-muted mb-6" style="font-size: 1rem; color: #4B5563;">Please provide your information below</p>
+
+        <!-- Form Inputs -->
+        <div class="flex flex-col gap-4">
+          <!-- 2 column row -->
+          <div class="flex gap-3">
+            <input type="text" class="input flex-1" placeholder="First Name" style="border-radius: 12px; border-color: #9CA3AF; height: 3.5rem;">
+            <input type="text" class="input flex-1" placeholder="Last Name" style="border-radius: 12px; border-color: #9CA3AF; height: 3.5rem;">
+          </div>
+          <!-- Full width rows -->
+          <input type="text" class="input w-full" placeholder="Firm Name" style="border-radius: 12px; border-color: #9CA3AF; height: 3.5rem;">
+          <input type="text" class="input w-full" placeholder="Designation" style="border-radius: 12px; border-color: #9CA3AF; height: 3.5rem;">
+          <input type="text" class="input w-full" placeholder="Employee count" style="border-radius: 12px; border-color: #9CA3AF; height: 3.5rem;">
+        </div>
+      </div>
+
+      <!-- Continue Button -->
+      <button class="btn btn-primary" onclick="navigateTo('view-step3')" style="margin-top: 2rem;">Continue</button>
+    </div>
+  </div>
+
+  <!-- VIEW: STEP 3 (Light Theme) -->
+  <div id="view-step3" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;" onclick="navigateTo('view-step2')">←</span>
+        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">Sun Associates<span class="brand-period">.</span></div>
+      </div>
+      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
+        <span>📞</span> Need Help?
+      </button>
+    </div>
+    
+    <div class="app-main flex flex-col justify-between" style="padding: 0;">
+      <div>
+        <!-- Segmented Progress Bar -->
+        <div class="flex gap-2 mb-2">
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+        </div>
+        <div class="text-xs text-muted mb-6">Step 3 of 3</div>
+
+        <!-- Heading -->
+        <h1 class="font-bold mb-8" style="font-size: 1.75rem; letter-spacing: -0.5px; color: #4B5563;">Welcome,</h1>
+
+        <!-- Form Inputs -->
+        <div class="flex flex-col gap-4">
+          <div style="position: relative;">
+            <input type="password" class="input w-full" placeholder="Create Password" style="border-radius: 12px; border: 2px solid #2563EB; height: 3.5rem; padding-right: 3rem;">
+            <!-- SVG Eye Off Icon -->
+            <svg style="position: absolute; right: 1rem; top: 1rem; width: 24px; height: 24px; color: #6B7280; cursor: pointer;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </div>
+          <div style="position: relative;">
+            <input type="password" class="input w-full" placeholder="Confirm Password" style="border-radius: 12px; border: 1px solid #9CA3AF; height: 3.5rem; padding-right: 3rem;">
+            <!-- SVG Eye Off Icon -->
+            <svg style="position: absolute; right: 1rem; top: 1rem; width: 24px; height: 24px; color: #6B7280; cursor: pointer;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
       <button class="btn btn-primary" onclick="navigateTo('view-dashboard', true)" style="margin-top: 2rem;">Continue</button>
     </div>
   </div>
 
-  <!-- VIEW: DASHBOARD (Dark Theme) -->
-  <div id="view-dashboard" class="app-layout dark hidden">
-    <div class="app-main">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Good morning<span class="brand-period">.</span></h1>
-        <div class="avatar avatar-sm">
-          <div class="avatar-fallback">SA</div>
-        </div>
+  <!-- MODALS (Hidden by default) -->
+  <div id="notification-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: flex-end; justify-content: center; padding: 16px;">
+    <div style="background: #2D2D2D; width: 100%; border-radius: 24px; padding: 24px 0 0 0; text-align: center; color: white;">
+      <div style="font-size: 24px; margin-bottom: 16px;">🔔</div>
+      <div style="font-weight: 500; font-size: 1.1rem; padding: 0 24px 24px 24px;">Allow <b>myHisaab</b> to send you notifications?</div>
+      <div style="border-top: 1px solid #404040; padding: 16px; color: #60A5FA; font-weight: 500; cursor: pointer;" onclick="closeModal('notification-modal')">Allow</div>
+      <div style="border-top: 1px solid #404040; padding: 16px; color: #60A5FA; font-weight: 500; cursor: pointer;" onclick="closeModal('notification-modal')">Don't allow</div>
+    </div>
+  </div>
+
+  <div id="location-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: flex-end; justify-content: center; padding: 16px;">
+    <div style="background: #2D2D2D; width: 100%; border-radius: 24px; padding: 24px 0 0 0; text-align: center; color: white;">
+      <div style="font-size: 24px; margin-bottom: 16px;">📍</div>
+      <div style="font-weight: 500; font-size: 1.1rem; padding: 0 24px 24px 24px;">Allow <b>myHisaab</b> to access this device's location?</div>
+      <div class="flex justify-center gap-8 mb-8 px-6">
+         <!-- Precise -->
+         <div class="flex flex-col items-center gap-2">
+            <div style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #60A5FA; background: #374151; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #2D2D2D, 0 0 0 4px #4B5563;">
+               <div style="color: #60A5FA; font-size: 2rem;">📍</div>
+            </div>
+            <div class="font-bold text-sm mt-2">Precise</div>
+         </div>
+         <!-- Approximate -->
+         <div class="flex flex-col items-center gap-2 opacity-70">
+            <div style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid transparent; background: #374151; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+               <!-- fake map lines -->
+               <div style="position: absolute; width: 100%; height: 1px; background: #6B7280; top: 30%;"></div>
+               <div style="position: absolute; width: 1px; height: 100%; background: #6B7280; left: 40%;"></div>
+            </div>
+            <div class="font-normal text-sm mt-2">Approximate</div>
+         </div>
       </div>
+      <div style="border-top: 1px solid #404040; padding: 16px; color: #60A5FA; font-weight: 500; cursor: pointer;" onclick="closeModal('location-modal')">While using the app</div>
+      <div style="border-top: 1px solid #404040; padding: 16px; color: #60A5FA; font-weight: 500; cursor: pointer;" onclick="closeModal('location-modal')">Only this time</div>
+      <div style="border-top: 1px solid #404040; padding: 16px; color: #60A5FA; font-weight: 500; cursor: pointer;" onclick="closeModal('location-modal')">Don't allow</div>
+    </div>
+  </div>
 
-      <div class="card mb-6">
-        <div class="flex justify-between items-center mb-4">
-          <div class="font-bold">Attendance Statistics</div>
-          <div class="text-xs flex items-center gap-1" style="background: var(--muted); padding: 4px 8px; border-radius: 8px;">
-            📅 Today
+  <!-- VIEW: DASHBOARD (Dark Theme) -->
+  <div id="view-dashboard" class="app-layout hidden" style="background: linear-gradient(135deg, #021B35 0%, #052445 100%); color: white;">
+    <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
+      <h1 class="text-3xl font-bold mb-6" style="color: #E2E8F0;">Good morning<span style="color: #F59E0B;">.</span></h1>
+
+      <!-- Stats Card -->
+      <div class="card mb-6" style="background: #12141A; border: none; border-radius: 20px; padding: 20px;">
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <div class="font-bold text-lg" style="color: #E2E8F0;">Attendance Statistics</div>
+            <div class="text-xs" style="color: #6B7280; margin-top: 4px;">Based on May 25, 2026</div>
           </div>
+          <button style="background: transparent; border: 1px solid #374151; color: #9CA3AF; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+            📅 Today
+          </button>
         </div>
 
-        <div class="stat-grid mb-2">
-          <div class="stat-cell orange">
-            <div class="stat-number">2</div>
-            <div class="stat-label">Staff</div>
+        <div class="stat-grid">
+          <!-- Row 1 -->
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #9CA3AF;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Not marked</div>
           </div>
-          <div class="stat-cell green">
-            <div class="stat-number">12</div>
-            <div class="stat-label">Staff</div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Present</div>
           </div>
-          <div class="stat-cell red">
-            <div class="stat-number">1</div>
-            <div class="stat-label">Staff</div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #EF4444;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Absence</div>
           </div>
           
-          <div class="stat-cell blue">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Staff</div>
+          <!-- Row 2 -->
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Late</div>
           </div>
-          <div class="stat-cell yellow">
-            <div class="stat-number">0</div>
-            <div class="stat-label">Staff</div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #A855F7;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Leave</div>
           </div>
-          <div class="stat-cell purple">
-            <div class="stat-number">0</div>
-            <div class="stat-label">Staff</div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
             <div class="stat-category">Early</div>
           </div>
+
+          <!-- Row 3 -->
+          <div class="stat-cell" style="grid-column: span 1.5;">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Heads</div>
+          </div>
+          <div class="stat-cell" style="grid-column: span 1.5;">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Archived</div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #22C55E;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Admin</div>
+          </div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #F59E0B;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Manager</div>
+          </div>
+          <div class="stat-cell">
+            <div class="flex items-center gap-2"><div class="stat-bar" style="background: #3B82F6;"></div><span class="stat-number">0</span> <span class="stat-label">Staff</span></div>
+            <div class="stat-category">Employee</div>
+          </div>
         </div>
       </div>
 
+      <!-- Search -->
       <div style="position: relative;" class="mb-4">
-        <span style="position: absolute; left: 1rem; top: 12px; opacity: 0.5;">🔍</span>
-        <input type="text" class="input" placeholder="Search employee..." style="padding-left: 2.5rem; border-radius: 999px; height: 2.75rem;">
+        <span style="position: absolute; left: 1rem; top: 14px; color: #9CA3AF;">🔍</span>
+        <input type="text" class="input" placeholder="Search" style="padding-left: 2.5rem; border-radius: 16px; height: 3.5rem; background: #12141A; border: none; color: white;">
+        <span style="position: absolute; right: 1.5rem; top: 14px; color: #9CA3AF; font-size: 1.2rem;">›</span>
       </div>
 
-      <div class="flex gap-2 mb-6" style="overflow-x: auto; padding-bottom: 4px;">
-        <div class="badge badge-outline" style="border-radius: 999px; padding: 6px 16px; border-color: var(--primary); color: var(--primary);">All</div>
-        <div class="badge badge-secondary" style="border-radius: 999px; padding: 6px 16px; background: var(--muted); color: var(--foreground);">Present</div>
-        <div class="badge badge-secondary" style="border-radius: 999px; padding: 6px 16px; background: var(--muted); color: var(--foreground);">Late</div>
-        <div class="badge badge-secondary" style="border-radius: 999px; padding: 6px 16px; background: var(--muted); color: var(--foreground);">Absent</div>
+      <!-- Filters -->
+      <div class="flex gap-2 mb-6">
+        <div style="background: #E2E8F0; color: #0F172A; border-radius: 20px; padding: 10px 24px; font-size: 1rem; font-weight: 500;">All</div>
+        <div style="background: #1F2937; color: white; border-radius: 20px; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; font-size: 1.25rem;">+</div>
       </div>
-
-      <!-- Employee List (Dummy) -->
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-4 p-2">
-          <div class="avatar"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Avatar"></div>
-          <div class="flex-1">
-            <div class="font-semibold">John Doe</div>
-            <div class="text-xs text-muted">09:05 AM - Clocked In</div>
-          </div>
-          <div class="badge" style="background: #22C55E; color: white;">Present</div>
-        </div>
-        <div class="flex items-center gap-4 p-2">
-          <div class="avatar"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jane" alt="Avatar"></div>
-          <div class="flex-1">
-            <div class="font-semibold">Jane Smith</div>
-            <div class="text-xs text-muted">09:35 AM - Clocked In</div>
-          </div>
-          <div class="badge" style="background: #3B82F6; color: white;">Late</div>
-        </div>
-        <div class="flex items-center gap-4 p-2">
-          <div class="avatar"><div class="avatar-fallback">RK</div></div>
-          <div class="flex-1">
-            <div class="font-semibold">Rahul Kumar</div>
-            <div class="text-xs text-muted">Not marked yet</div>
-          </div>
-          <div class="badge" style="background: #F97316; color: white;">Pending</div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- Bottom Nav -->
-    <div class="bottom-nav">
-      <div class="bottom-nav-item active" onclick="navigateTo('view-dashboard', true)">
-        <div class="nav-icon">🏠</div>
-        <span>Home</span>
-      </div>
-      <div class="bottom-nav-item" onclick="alert('History View (v2)')">
-        <div class="nav-icon">📋</div>
-        <span>Logs</span>
-      </div>
-      <div class="bottom-nav-item" onclick="alert('Map View')">
-        <div class="nav-icon">🗺️</div>
-        <span>Map</span>
-      </div>
-      <div class="bottom-nav-item" onclick="navigateTo('view-settings', true)">
-        <div class="nav-icon">⚙️</div>
-        <span>Settings</span>
-      </div>
+    <!-- FAB -->
+    <div style="position: fixed; bottom: 160px; right: 16px; background: #ADCDFF; width: 72px; height: 72px; border-radius: 24px; display: flex; justify-content: center; align-items: center; font-size: 32px; color: #0F172A; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 50; cursor: pointer;">
+      +
+    </div>
+  </div>
+
+  <!-- VIEW: MAP -->
+  <div id="view-map" class="app-layout hidden" style="background: #e0e0e0; position: relative; color: black;">
+    <!-- Fake Map Background -->
+    <div style="position: absolute; inset: 0; background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Cpath d=%22M0 50 Q 25 25, 50 50 T 100 50%22 fill=%22none%22 stroke=%22%23b0bec5%22 stroke-width=%221%22/%3E%3Cpath d=%22M50 0 L 50 100%22 stroke=%22%23b0bec5%22 stroke-width=%221%22/%3E%3C/svg%3E'); background-size: 100px 100px;"></div>
+    <div style="position: absolute; top: 100px; left: 50px; font-weight: bold; color: #546E7A; font-size: 1.2rem;">SANSAD MARG AREA</div>
+    <div style="position: absolute; top: 200px; left: 30px; font-weight: bold; color: #8E24AA; font-size: 1rem;">Samvidhan Sadan</div>
+    
+    <!-- Top Left Trial Pill -->
+    <div style="position: absolute; top: 40px; left: 16px; display: flex; z-index: 10;">
+       <div style="background: white; border-radius: 24px; padding: 10px 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+         <span style="font-size: 1.4rem;">h<span style="color:#F59E0B">.</span></span>
+         <span style="color: #111827; font-weight: 600;">Trial</span>
+       </div>
+    </div>
+
+    <!-- Top Right Actions -->
+    <div style="position: absolute; top: 40px; right: 16px; display: flex; flex-direction: column; gap: 12px; z-index: 10;">
+       <div style="background: #1F2937; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">↻</div>
+       <div style="background: #1F2937; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">▲</div>
     </div>
   </div>
 
   <!-- VIEW: SETTINGS (Dark Theme) -->
-  <div id="view-settings" class="app-layout dark hidden">
-    <div class="app-main">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Your Info<span class="brand-period">.</span></h1>
-      </div>
+  <div id="view-settings" class="app-layout hidden" style="background: linear-gradient(180deg, #1A1C23 0%, #111418 100%); color: white;">
+    <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
+      
+      <h1 class="text-4xl font-bold mb-8" style="letter-spacing: -1px;">Your Info<span style="color: #F59E0B;">.</span></h1>
 
-      <div class="flex justify-center mb-6">
-        <div class="avatar avatar-lg" style="border: 4px solid var(--card);">
-          <div class="avatar-fallback">SA</div>
+      <!-- Avatar -->
+      <div class="mb-8 flex">
+        <div style="width: 120px; height: 120px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center;">
+          <!-- SVG User Icon -->
+          <svg style="width: 60px; height: 60px; color: #9CA3AF;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </div>
       </div>
 
-      <div class="settings-list mb-6">
-        <div class="settings-item">
-          <div class="settings-item-icon">🏢</div>
-          <div class="settings-item-label">Company Details</div>
-          <div class="settings-item-chevron">›</div>
+      <!-- Settings Block 1: Navigation -->
+      <div class="settings-list mb-6" style="background: #1B1E24; border: none; border-radius: 16px;">
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">💼</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Switch Firm</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
         </div>
-        <div class="settings-item">
-          <div class="settings-item-icon">📋</div>
-          <div class="settings-item-label">Personal Details</div>
-          <div class="settings-item-chevron">›</div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">👤</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Your Personal Details</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
         </div>
-      </div>
-
-      <h2 class="text-sm font-semibold text-muted mb-2 ml-2">PREFERENCES</h2>
-      <div class="settings-list mb-6">
-        <div class="settings-item justify-between">
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">🏢</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Company Details</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">⏱️</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Company Shifts</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">👥</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Employee Categories</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">⚙️</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Payroll Configurations</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">⚙️</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Payroll Template</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">🛡️</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Designations & Permissions</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
           <div class="flex items-center gap-4">
-            <div class="settings-item-icon">📍</div>
-            <div class="settings-item-label">Geo Fencing</div>
+            <div class="settings-item-icon" style="color: #D1D5DB;">📅</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Leave System</div>
           </div>
-          <div class="switch active"><span class="switch-thumb"></span></div>
+          <div class="switch active" style="background: #93C5FD;"><span class="switch-thumb" style="background: #1E3A8A;"></span></div>
         </div>
-        <div class="settings-item justify-between">
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
           <div class="flex items-center gap-4">
-            <div class="settings-item-icon">👤</div>
-            <div class="settings-item-label">Selfie Attendance</div>
+            <div class="settings-item-icon" style="color: #D1D5DB;">📸</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Face Attendance</div>
           </div>
-          <div class="switch active"><span class="switch-thumb"></span></div>
+          <div class="switch active" style="background: #93C5FD;"><span class="switch-thumb" style="background: #1E3A8A;"></span></div>
+        </div>
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="flex items-center gap-4">
+            <div class="settings-item-icon" style="color: #D1D5DB;">🧾</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Expense System</div>
+          </div>
+          <div class="switch"><span class="switch-thumb" style="background: #9CA3AF;"></span></div>
+        </div>
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="flex items-center gap-4">
+            <div class="settings-item-icon" style="color: #D1D5DB;">📍</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Geo Fencing</div>
+          </div>
+          <div class="switch"><span class="switch-thumb" style="background: #9CA3AF;"></span></div>
+        </div>
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="flex items-center gap-4">
+            <div class="settings-item-icon" style="color: #D1D5DB;">💵</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Custom Daywise Salary</div>
+          </div>
+          <div class="switch"><span class="switch-thumb" style="background: #9CA3AF;"></span></div>
+        </div>
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="flex items-center gap-4">
+            <div class="settings-item-icon" style="color: #D1D5DB;">⏱️</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Maintain Salary Payment History</div>
+          </div>
+          <div class="switch active" style="background: #93C5FD;"><span class="switch-thumb" style="background: #1E3A8A;"></span></div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">📅</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Holidays</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">📄</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Reports</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+
+        <!-- Specialized toggles -->
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px; align-items: flex-start;">
+          <div class="flex items-start gap-4">
+            <div class="settings-item-icon" style="color: #D1D5DB; margin-top: 2px;">🔔</div>
+            <div>
+              <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0; margin-bottom: 4px;">Staff Punch Notification</div>
+              <div style="font-size: 0.85rem; color: #9CA3AF; line-height: 1.3;">Get notified about the in/out of your staff as soon as they punch in/out.</div>
+            </div>
+          </div>
+          <div class="switch active" style="background: #93C5FD; flex-shrink: 0; margin-top: 8px;"><span class="switch-thumb" style="background: #1E3A8A;"></span></div>
+        </div>
+
+        <div class="settings-item justify-between" style="border-bottom: 1px solid #374151; padding: 18px 16px; align-items: flex-start;">
+          <div class="flex items-start gap-4 flex-1">
+            <div class="settings-item-icon" style="color: #D1D5DB; margin-top: 2px;">💬</div>
+            <div class="flex-1">
+              <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0; margin-bottom: 4px;">WhatsApp Report</div>
+              <div style="font-size: 0.85rem; color: #9CA3AF; line-height: 1.3; margin-bottom: 8px;">Get daily attendance report of your staff on WhatsApp at the end of the day.</div>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-2" style="margin-top: 8px; flex-shrink: 0;">
+            <div style="color: #60A5FA; font-weight: 500;">8:00 PM</div>
+            <div class="switch active" style="background: #93C5FD;"><span class="switch-thumb" style="background: #1E3A8A;"></span></div>
+          </div>
         </div>
       </div>
 
-      <h2 class="text-sm font-semibold text-muted mb-2 ml-2">INVITE EMPLOYEES</h2>
-      <div class="card mb-6" style="flex-direction: row; justify-content: space-between; align-items: center; padding: 1rem;">
+      <h2 class="font-bold mb-4" style="color: white; font-size: 1.1rem;">Invite Employees</h2>
+      <div class="mb-4" style="background: #2D3748; border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <div class="text-xs text-muted mb-1">Company Code</div>
-          <div class="font-mono text-xl font-bold tracking-widest">SUN24</div>
+          <div class="text-sm" style="color: #9CA3AF; margin-bottom: 4px;">Company Code</div>
+          <div class="font-bold" style="font-size: 1.8rem; color: white; letter-spacing: 2px;">OODD1</div>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-outline" style="height: 40px; padding: 0 12px;">📋</button>
-          <button class="btn btn-outline" style="height: 40px; padding: 0 12px;">🔗</button>
+        <div class="flex gap-4 text-xl" style="color: #E2E8F0;">
+          <span>📋</span>
+          <span>🔗</span>
         </div>
       </div>
 
-      <button class="btn btn-destructive" onclick="navigateTo('view-onboarding')">Logout</button>
+      <div class="settings-list mb-8" style="background: #1B1E24; border: none; border-radius: 16px;">
+        <div class="settings-item" style="padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">📑</div>
+          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">View Logs</div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <button onclick="navigateTo('view-step1')" style="width: 100%; background: #450A0A; border: none; border-radius: 12px; padding: 18px; color: #EF4444; font-size: 1.1rem; font-weight: 600; text-align: center; cursor: pointer;">
+        Logout
+      </button>
+
     </div>
+  </div>
 
-    <!-- Bottom Nav -->
-    <div class="bottom-nav">
-      <div class="bottom-nav-item" onclick="navigateTo('view-dashboard', true)">
-        <div class="nav-icon">🏠</div>
-        <span>Home</span>
-      </div>
-      <div class="bottom-nav-item" onclick="alert('History View (v2)')">
-        <div class="nav-icon">📋</div>
-        <span>Logs</span>
-      </div>
-      <div class="bottom-nav-item" onclick="alert('Map View')">
-        <div class="nav-icon">🗺️</div>
-        <span>Map</span>
-      </div>
-      <div class="bottom-nav-item active" onclick="navigateTo('view-settings', true)">
-        <div class="nav-icon">⚙️</div>
-        <span>Settings</span>
-      </div>
+  <!-- Trial Banner (Global) -->
+  <div id="trial-banner" class="hidden" style="position: fixed; bottom: 84px; left: 0; right: 0; background: #FBBF24; color: #0F172A; text-align: center; padding: 12px; font-size: 0.875rem; font-weight: 600; z-index: 50;">
+    You're in Trial Mode. Upgrade now for full access!
+  </div>
+
+  <!-- Bottom Nav (Global) -->
+  <div id="global-bottom-nav" class="bottom-nav hidden" style="background: #020C17; border-top: none; z-index: 60; height: 84px; padding-bottom: 20px;">
+    <div class="bottom-nav-item" onclick="navigateTo('view-map')" id="nav-map">
+      <div class="nav-icon" style="background: transparent;">🗺️</div>
+      <span>Map</span>
+    </div>
+    <div class="bottom-nav-item active" onclick="navigateTo('view-dashboard')" id="nav-staff">
+      <div class="nav-icon" style="background: #2563EB; border-radius: 20px; padding: 8px 24px;">👥</div>
+      <span style="color: white; font-weight: 500;">Staff</span>
+    </div>
+    <div class="bottom-nav-item" style="position: relative;" id="nav-work">
+      <div style="position: absolute; top: -5px; right: 0; background: #E2E8F0; color: black; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">beta</div>
+      <div class="nav-icon" style="background: transparent;">💼</div>
+      <span>Work</span>
+    </div>
+    <div class="bottom-nav-item" id="nav-leaves">
+      <div class="nav-icon" style="background: transparent;">📅</div>
+      <span>Leaves</span>
+    </div>
+    <div class="bottom-nav-item" onclick="navigateTo('view-settings')" id="nav-settings">
+      <div class="nav-icon" style="background: transparent;">⚙️</div>
+      <span>Settings</span>
     </div>
   </div>
 
