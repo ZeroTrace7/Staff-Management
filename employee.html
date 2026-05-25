@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Staff Management - Employee</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+  <meta name="theme-color" content="#2563EB">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -537,6 +540,16 @@
     // Employee page: set role on load
     var selectedRole = 'employee';
   </script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- App Modules -->
+  <script src="js/supabase-client.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/offline-sync.js"></script>
+  <script src="js/location.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/attendance.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
