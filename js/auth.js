@@ -49,12 +49,19 @@ const Auth = {
     localStorage.removeItem(this.PENDING_OWNER_KEY);
   },
 
+  _getEmailRedirectUrl(pageName) {
+    return new URL(pageName, window.location.origin).toString();
+  },
+
   async signUpOwner(email, password, companyName) {
     try {
       const client = this._requireClient();
       const { data: authData, error: authError } = await client.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: this._getEmailRedirectUrl('owner.html')
+        }
       });
       if (authError) throw authError;
       if (!authData.user) {
@@ -145,7 +152,10 @@ const Auth = {
       const client = this._requireClient();
       const { data: authData, error: authError } = await isolatedClient.auth.signUp({
         email: employeeEmail,
-        password: employeePassword
+        password: employeePassword,
+        options: {
+          emailRedirectTo: this._getEmailRedirectUrl('employee.html')
+        }
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error('Employee auth account was not created.');
