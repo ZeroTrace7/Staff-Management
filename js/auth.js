@@ -53,6 +53,15 @@ const Auth = {
     return new URL(pageName, window.location.origin).toString();
   },
 
+  _createUuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+      (Number(c) ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> Number(c) / 4).toString(16)
+    );
+  },
+
   async signUpOwner(email, password, companyName) {
     try {
       const client = this._requireClient();
@@ -115,17 +124,18 @@ const Auth = {
       }
 
       const client = this._requireClient();
-      const { data: company, error: companyError } = await client
+      const company = {
+        id: this._createUuid(),
+        name: trimmedCompany,
+        admin_ids: [userId],
+        geofence_lat: 0,
+        geofence_lng: 0,
+        geofence_radius: 100
+      };
+
+      const { error: companyError } = await client
         .from('companies')
-        .insert({
-          name: trimmedCompany,
-          admin_ids: [userId],
-          geofence_lat: 0,
-          geofence_lng: 0,
-          geofence_radius: 100
-        })
-        .select()
-        .single();
+        .insert(company);
       if (companyError) throw companyError;
 
       const { data: profile, error: userError } = await client

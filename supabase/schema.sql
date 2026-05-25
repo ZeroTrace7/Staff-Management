@@ -102,13 +102,17 @@ ALTER TABLE last_known_locations ENABLE ROW LEVEL SECURITY;
 -- Any authenticated user can create a company (needed for first-admin bootstrap)
 DROP POLICY IF EXISTS "Authenticated users can create companies" ON companies;
 CREATE POLICY "Authenticated users can create companies"
-ON companies FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+ON companies FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND auth.uid() = ANY(admin_ids)
+);
 
 -- Users can view their own company
 DROP POLICY IF EXISTS "Users can view their own company" ON companies;
 CREATE POLICY "Users can view their own company"
 ON companies FOR SELECT USING (
-    id IN (SELECT company_id FROM users WHERE id = auth.uid())
+    auth.uid() = ANY(admin_ids)
+    OR id = public.current_user_company_id()
 );
 
 -- Admins can update their own company (for geofence setup, settings)
@@ -116,10 +120,18 @@ DROP POLICY IF EXISTS "Admins can update their own company" ON companies;
 CREATE POLICY "Admins can update their own company"
 ON companies FOR UPDATE
 USING (
-    id IN (SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin')
+    auth.uid() = ANY(admin_ids)
+    OR (
+        public.current_user_is_admin()
+        AND id = public.current_user_company_id()
+    )
 )
 WITH CHECK (
-    id IN (SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin')
+    auth.uid() = ANY(admin_ids)
+    OR (
+        public.current_user_is_admin()
+        AND id = public.current_user_company_id()
+    )
 );
 
 -- ─── USERS ──────────────────────────────────────────────────────────────────

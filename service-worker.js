@@ -1,4 +1,4 @@
-const CACHE_NAME = 'staff-management-v6';
+const CACHE_NAME = 'staff-management-v7';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
