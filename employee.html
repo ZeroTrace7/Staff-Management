@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sun Associates Attendance</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- VIEW: STEP 1 (Light Theme) -->
+  <div id="view-step1" class="app-layout" style="background: white; color: black; padding: 16px;">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;">←</span>
+        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">Sun Associates<span class="brand-period">.</span></div>
+      </div>
+      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
+        <span>📞</span> Need Help?
+      </button>
+    </div>
+
+    <div class="app-main flex flex-col justify-between" style="padding: 0;">
+      <div>
+        <!-- Segmented Progress Bar -->
+        <div class="flex gap-2 mb-2">
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #E5E7EB; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #E5E7EB; border-radius: 4px;"></div>
+        </div>
+        <div class="text-xs text-muted mb-6">Step 1 of 3</div>
+
+        <!-- Headings -->
+        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px;">Create account</h1>
+        <p class="text-muted text-sm mb-6">Choose how want you to start</p>
+
+        <!-- Selection Cards -->
+        <div class="flex gap-4 mb-6">
+          <!-- Employee Card (Inactive) -->
+          <div class="selection-card inactive" onclick="selectRole('employee')">
+            <div class="selection-icon" style="opacity: 0;">👤</div>
+            <div class="font-bold" style="font-size: 1.1rem; margin-bottom: 4px;">Employee</div>
+            <div class="text-xs text-muted" style="color: #9CA3AF;">Join your team</div>
+          </div>
+          
+          <!-- Business Card (Active) -->
+          <div class="selection-card active" onclick="selectRole('business')">
+            <div class="selection-icon" style="color: #60A5FA;">🏢</div>
+            <div class="font-bold" style="font-size: 1.1rem; margin-bottom: 4px;">Business</div>
+            <div class="text-xs" style="color: #9CA3AF;">Create a workspace</div>
+          </div>
+        </div>
+
+        <!-- Checkbox -->
+        <div class="flex items-start gap-3 mb-6">
+        <input type="checkbox" id="usage" class="custom-checkbox mt-1">
+        <label for="usage" class="text-sm">Have you ever used a app for attendance and payroll or first time user.</label>
+      </div>
+
+      <button class="btn-primary" onclick="handleStep1Continue()">Continue</button>
+    </div>
+  </div>
+
+  >
+
+  >
+
+  <!-- VIEW: EMPLOYEE STEP 2 -->
+  <div id="view-emp-step2" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
+    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;" onclick="navigateTo('view-step1')">←</span>
+        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">hisaab<span class="brand-period">.</span></div>
+      </div>
+      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
+        <span>📞</span> Need Help?
+      </button>
+    </div>
+
+    <div class="app-main flex flex-col justify-between" style="padding: 0;">
+      <div>
+        <div class="flex gap-2 mb-2">
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #E5E7EB; border-radius: 4px;"></div>
+        </div>
+        <div class="text-xs text-muted mb-6">Step 2 of 3</div>
+
+        <h1 class="font-bold mb-2" style="font-size: 1.75rem; letter-spacing: -0.5px;">Enter your details</h1>
+        <p class="text-muted mb-6" style="font-size: 1rem; color: #4B5563;">Please provide your information below</p>
+
+        <div class="flex flex-col gap-4">
+          <div class="flex gap-3">
+            <div style="flex: 1;">
+              <input type="text" id="emp-fname" class="input" placeholder="First Name" style="border-radius: 12px; height: 3.5rem;">
+              <div id="err-fname" class="error-msg hidden">Please enter first na...</div>
+            </div>
+            <div style="flex: 1;">
+              <input type="text" id="emp-lname" class="input" placeholder="Last Name" style="border-radius: 12px; height: 3.5rem;">
+              <div id="err-lname" class="error-msg hidden">Please enter last na...</div>
+            </div>
+          </div>
+          <div>
+            <input type="text" id="emp-ccode" class="input w-full" placeholder="Company Code" style="border-radius: 12px; height: 3.5rem;">
+            <div id="err-ccode" class="error-msg hidden">Please enter company code</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="validateEmpStep2()" style="margin-top: 2rem;">Continue</button>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE STEP 3 -->
+  <div id="view-emp-step3" class="app-layout hidden" style="background: white; color: black; padding: 16px;">
+    <div class="flex justify-between items-center mb-6" style="margin-top: 8px;">
+      <div class="flex items-center gap-2">
+        <span style="font-size: 1.25rem; font-weight: 500; cursor: pointer;" onclick="navigateTo('view-emp-step2')">←</span>
+        <div class="font-bold text-2xl" style="letter-spacing: -0.5px;">hisaab<span class="brand-period">.</span></div>
+      </div>
+      <button style="background: black; color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px;">
+        <span>📞</span> Need Help?
+      </button>
+    </div>
+
+    <div class="app-main flex flex-col justify-between" style="padding: 0;">
+      <div>
+        <div class="flex gap-2 mb-2">
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+          <div style="height: 4px; flex: 1; background: #F97316; border-radius: 4px;"></div>
+        </div>
+        <div class="text-xs text-muted mb-6">Step 3 of 3</div>
+
+        <h1 class="font-bold mb-8" style="font-size: 1.75rem; letter-spacing: -0.5px; color: #4B5563;">Welcome,</h1>
+
+        <div class="flex flex-col gap-4">
+          <div style="position: relative;">
+            <input type="password" class="input w-full" placeholder="Create Password" style="border-radius: 12px; border: 2px solid #2563EB; height: 3.5rem; padding-right: 3rem;">
+            <svg style="position: absolute; right: 1rem; top: 1rem; width: 24px; height: 24px; color: #6B7280; cursor: pointer;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </div>
+          <div style="position: relative;">
+            <input type="password" class="input w-full" placeholder="Confirm Password" style="border-radius: 12px; border: 1px solid #9CA3AF; height: 3.5rem; padding-right: 3rem;">
+            <svg style="position: absolute; right: 1rem; top: 1rem; width: 24px; height: 24px; color: #6B7280; cursor: pointer;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="navigateTo('view-emp-permissions')" style="margin-top: 2rem;">Continue</button>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE PERMISSIONS -->
+  <div id="view-emp-permissions" class="app-layout hidden" style="background: linear-gradient(180deg, #FCD34D 0%, #FEF3C7 100%); font-family: sans-serif;">
+    <div class="app-main" style="padding: 32px 16px; padding-bottom: 120px; display: flex; flex-direction: column; align-items: center; overflow-y: auto;">
+      
+      <!-- Top Icon -->
+      <div style="background: rgba(255, 255, 255, 0.4); width: 80px; height: 80px; border-radius: 24px; display: flex; justify-content: center; align-items: center; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="color: #047857; font-size: 2.5rem;">📍</div>
+      </div>
+      
+      <h1 class="font-bold mb-2 text-center" style="color: white; font-size: 1.8rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">Turn on permissions</h1>
+      <p class="text-center mb-8" style="color: rgba(255,255,255,0.95); font-size: 0.95rem;">Enable permissions to track attendance automatically</p>
+
+      <div class="flex flex-col gap-3 w-full">
+        <!-- 1. Notifications -->
+        <div class="perm-card">
+          <div class="perm-icon-wrapper" style="color: #22C55E;">🔔</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Notifications</div>
+            <div class="perm-desc">Receive important updates and alerts</div>
+          </div>
+          <div class="perm-check">✓</div>
+        </div>
+
+        <!-- 2. Location access -->
+        <div class="perm-card">
+          <div class="perm-icon-wrapper" style="color: #22C55E;">📍</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Location access</div>
+            <div class="perm-desc">Track attendance at work location</div>
+          </div>
+          <div class="perm-check">✓</div>
+        </div>
+
+        <!-- 3. Physical activity -->
+        <div class="perm-card">
+          <div class="perm-icon-wrapper" style="color: #22C55E;">🏃</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Physical activity</div>
+            <div class="perm-desc">Detect movement patterns and activity</div>
+          </div>
+          <div class="perm-check">✓</div>
+        </div>
+
+        <!-- 4. Location service -->
+        <div class="perm-card">
+          <div id="icon-locSvc" class="perm-icon-wrapper" style="color: #EF4444;">🚫</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Location service</div>
+            <div class="perm-desc">Enable GPS for location tracking</div>
+          </div>
+          <button id="btn-allow-locSvc" class="perm-btn" onclick="allowPermission('locSvc')">Allow</button>
+          <div id="check-locSvc" class="perm-check hidden">✓</div>
+        </div>
+
+        <!-- 5. Battery optimization -->
+        <div class="perm-card">
+          <div id="icon-batt" class="perm-icon-wrapper" style="color: #EF4444;">🔋</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Battery optimization</div>
+            <div class="perm-desc">Disable for reliable tracking</div>
+          </div>
+          <button id="btn-allow-batt" class="perm-btn" onclick="allowPermission('batt')">Allow</button>
+          <div id="check-batt" class="perm-check hidden">✓</div>
+        </div>
+
+        <!-- 6. Auto-start permission -->
+        <div class="perm-card">
+          <div id="icon-auto" class="perm-icon-wrapper" style="color: #EF4444;">⏻</div>
+          <div class="perm-text-wrapper flex-1">
+            <div class="perm-title">Auto-start permission</div>
+            <div class="perm-desc">Allow app to start automatically</div>
+          </div>
+          <button id="btn-allow-auto" class="perm-btn" onclick="allowPermission('auto')">Allow</button>
+          <div id="check-auto" class="perm-check hidden">✓</div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; padding: 24px 16px; background: linear-gradient(0deg, #FEF3C7 60%, transparent 100%); display: flex; justify-content: center;">
+      <button id="btn-perm-continue" class="btn-primary" style="background: #89B3A9; opacity: 0.8; border: none; font-size: 1.1rem; border-radius: 12px; height: 3.5rem; transition: all 0.3s ease;" disabled>Continue</button>
+    </div>
+  </div>
+
+  >
+
+  >
+
+  <div id="battery-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #2D3748; width: 100%; max-width: 400px; border-radius: 24px; padding: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div class="flex justify-center mb-4">
+        <div style="font-size: 3rem; color: #FCA5A5;">🔋</div>
+      </div>
+      <h2 class="text-xl font-bold mb-4">Background Power Usage Restrictions</h2>
+      <p class="text-sm text-gray-300 mb-4" style="line-height: 1.5;">Your device manufacturer is known to have aggressive power management that may stop this app from tracking attendance correctly.</p>
+      
+      <p class="text-sm text-gray-300 mb-6" style="line-height: 1.5;">
+        For Xiaomi/Redmi devices:<br>
+        1. Settings > Apps > Manage apps > Hisaab<br>
+        2. Turn ON "Autostart"<br>
+        3. Under "Battery saver", select "No restrictions"<br>
+        4. Settings > Battery & performance > App battery saver<br>
+        5. Find Hisaab and set to "No restrictions"<br>
+        6. Lock the app in Recent Apps (swipe down on the app preview)
+      </p>
+
+      <div style="background: #991B1B; border-radius: 8px; padding: 12px; display: flex; gap: 12px; align-items: center; margin-bottom: 24px;">
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <span class="text-xs" style="line-height: 1.4;">Without proper settings, attendance tracking may not work reliably.</span>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <button onclick="closeModal('battery-modal')" style="background: transparent; color: #93C5FD; border: none; font-weight: 500; font-size: 1rem; cursor: pointer; padding: 8px;">Remind Me Later</button>
+        <button onclick="closeModal('battery-modal')" style="background: #1F2937; color: #93C5FD; border: none; border-radius: 12px; padding: 16px; font-weight: 500; font-size: 1rem; cursor: pointer;">Optimize Battery Settings</button>
+      </div>
+    </div>
+  </div>
+
+  >
+
+  >
+
+  >
+
+  <!-- Trial Banner (Global) -->
+  <div id="trial-banner" class="hidden" style="position: fixed; bottom: 84px; left: 0; right: 0; background: #FBBF24; color: #0F172A; text-align: center; padding: 12px; font-size: 0.875rem; font-weight: 600; z-index: 50;">
+    You're in Trial Mode. Upgrade now for full access!
+  </div>
+
+  >
+
+  <!-- Bottom Nav (Employee) -->
+  <div id="emp-bottom-nav" class="bottom-nav hidden" style="background: #12141A; border-top: none; z-index: 60; height: 84px; padding-bottom: 20px;">
+    <div class="bottom-nav-item active" onclick="navigateTo('view-emp-dashboard')" id="nav-punch">
+      <div class="nav-icon" style="background: #1E3A8A; border-radius: 20px; padding: 8px 24px;">✋</div>
+      <span style="color: white; font-weight: 500;">Punch</span>
+    </div>
+    <div class="bottom-nav-item" onclick="navigateTo('view-emp-you')" id="nav-you">
+      <div class="nav-icon" style="background: transparent; font-size: 1.25rem;">👤</div>
+      <span>You</span>
+    </div>
+    <div class="bottom-nav-item" style="position: relative;" id="nav-work-emp">
+      <div style="position: absolute; top: -5px; right: 0; background: #E2E8F0; color: black; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">beta</div>
+      <div class="nav-icon" style="background: transparent; font-size: 1.25rem;">💼</div>
+      <span>Work</span>
+    </div>
+    <div class="bottom-nav-item" onclick="navigateTo('view-emp-requests')" id="nav-req">
+      <div class="nav-icon" style="background: transparent; font-size: 1.25rem;">📝</div>
+      <span>Rquests</span>
+    </div>
+    <div class="bottom-nav-item" onclick="navigateTo('view-emp-settings')" id="nav-settings-emp">
+      <div class="nav-icon" style="background: transparent; font-size: 1.25rem;">⚙️</div>
+      <span>Settings</span>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE DASHBOARD (Dark Theme) -->
+  <div id="view-emp-dashboard" class="app-layout hidden" style="background: #111418; color: white;">
+    <!-- Header -->
+    <div class="flex justify-between items-center px-6 py-4">
+      <div class="flex items-center gap-2">
+        <span style="font-weight: bold; font-size: 1.8rem; letter-spacing: -1px;">h<span style="color: #F97316;">.</span></span>
+        <span style="font-weight: 600; font-size: 1.1rem;">Trial</span>
+      </div>
+      <div style="font-size: 1.5rem; cursor: pointer; color: white;">↻</div>
+    </div>
+    
+    <!-- Top Banner -->
+    <div style="background: #374151; color: white; text-align: center; padding: 12px; font-size: 0.95rem; font-weight: 500;">
+      Attendance marked successfully for today
+    </div>
+
+    <!-- Main Content -->
+    <div class="app-main flex flex-col items-center justify-center relative" style="padding-bottom: 250px;">
+      <!-- Giant Logo -->
+      <div style="font-size: 300px; font-weight: bold; color: #1B1E24; line-height: 1; letter-spacing: -15px; position: relative; margin-top: -80px;">
+        h<span style="color: #F97316; font-size: 120px; position: absolute; bottom: 50px; right: -30px;">.</span>
+      </div>
+      
+      <div style="color: white; font-weight: 600; font-size: 1.1rem; margin-top: -30px; z-index: 10;">
+        You have successfully logged off !
+      </div>
+    </div>
+
+    <!-- White bottom container for Punch IN -->
+    <div style="position: absolute; bottom: 128px; left: 0; right: 0; background: white; padding: 16px; z-index: 40;">
+      <button onclick="openModal('punch-modal')" style="width: 100%; background: #4ADE80; color: white; font-weight: 600; font-size: 1.1rem; border: none; border-radius: 12px; height: 56px; cursor: pointer; transition: transform 0.1s ease;">
+        Punch IN
+      </button>
+    </div>
+  </div>
+
+  <div id="punch-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #202D26; width: 100%; max-width: 320px; border-radius: 24px; padding: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <h3 style="color: #4ADE80; font-size: 1.25rem; font-weight: bold; margin-bottom: 12px;">Punching IN?</h3>
+      <p style="color: #9CA3AF; margin-bottom: 32px; font-size: 1rem;">Are you sure you want to punch IN?</p>
+      <div style="display: flex; justify-content: flex-end; gap: 32px;">
+        <button onclick="closeModal('punch-modal')" style="color: #93C5FD; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Cancel</button>
+        <button onclick="closeModal('punch-modal')" style="color: #4ADE80; background: none; border: none; font-weight: 500; font-size: 1rem; cursor: pointer;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE YOU TAB -->
+  <div id="view-emp-you" class="app-layout hidden" style="background: linear-gradient(180deg, #2D2438 0%, #111418 30%, #111418 100%); color: white;">
+    
+    <div style="position: absolute; top: 16px; right: 16px; font-size: 1.5rem; color: #9CA3AF; cursor: pointer; z-index: 10;">👤</div>
+
+    <div class="app-main" style="padding: 24px 16px; padding-top: 80px; padding-bottom: 200px;">
+      
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-1">Previous Reports</h2>
+        <p class="text-sm text-gray-400 mb-4">View your last 1 session</p>
+        
+        <div style="background: linear-gradient(135deg, #71D3A6 0%, #51B78B 100%); border-radius: 16px; height: 180px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+          <!-- Mock Pattern -->
+          <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.2; background-image: radial-gradient(circle at 10px 10px, white 2px, transparent 2.5px); background-size: 30px 30px;"></div>
+          <div style="position: absolute; bottom: 16px; left: 16px; font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; color: rgba(255,255,255,0.9);">
+            May '26
+          </div>
+        </div>
+        <div class="font-bold text-lg mt-2 flex items-center gap-2">
+          May <span style="color: #F97316;">•</span> 2026
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h2 class="text-xl font-bold mb-1">Your current analytics</h2>
+        <p class="text-sm text-gray-400 mb-6">Based on your current monthly data</p>
+
+        <div style="border-top: 1px solid #1F2937; padding: 16px 0; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div class="font-bold text-lg">Monday</div>
+            <div class="text-sm text-gray-400">May 25, 2026</div>
+          </div>
+          <div class="text-right">
+            <div style="color: #22C55E; font-weight: 600; font-size: 0.85rem;">IN</div>
+            <div class="text-sm text-gray-400">2:51 PM</div>
+          </div>
+        </div>
+        
+        <div style="border-top: 1px solid #1F2937; border-bottom: 1px solid #1F2937; padding: 16px 0; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div class="font-bold text-lg">Sunday</div>
+            <div class="text-sm text-gray-400">May 24, 2026</div>
+          </div>
+          <div class="text-right">
+            <div style="color: #A855F7; font-weight: 600; font-size: 0.85rem;">LEAVE</div>
+            <div class="text-sm text-gray-400">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Orange Punch Button -->
+    <div onclick="navigateTo('view-emp-dashboard')" style="position: fixed; bottom: 140px; right: 16px; background: #F97316; width: 64px; height: 64px; border-radius: 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 24px rgba(249,115,22,0.4); z-index: 50; cursor: pointer; transition: transform 0.2s ease;">
+      <span style="color: white; font-size: 2rem;">✋</span>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE REQUESTS -->
+  <div id="view-emp-requests" class="app-layout hidden" style="background: #111418; color: white;">
+    <div class="app-header" style="border-bottom: 1px solid #1F2937; padding: 16px;">
+      <div class="font-bold text-xl">Leave Requests</div>
+    </div>
+    
+    <div class="flex px-4 pt-4 gap-4" style="border-bottom: 1px solid #1F2937;">
+      <div style="padding-bottom: 12px; color: #60A5FA; border-bottom: 2px solid #60A5FA; font-weight: 600; cursor: pointer;">Pending</div>
+      <div style="padding-bottom: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer;">Approved</div>
+      <div style="padding-bottom: 12px; color: #9CA3AF; font-weight: 500; cursor: pointer;">Rejected</div>
+    </div>
+
+    <div class="app-main" style="padding: 16px; padding-bottom: 150px;">
+      <!-- Leave Card -->
+      <div style="background: #1B1E24; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid #374151;">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <div class="font-bold text-lg">Sick Leave</div>
+            <div class="text-sm text-gray-400 mt-1">May 28 - May 29, 2026</div>
+          </div>
+          <div style="background: rgba(245, 158, 11, 0.2); color: #FCD34D; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+            Pending
+          </div>
+        </div>
+        <div class="text-sm text-gray-300 bg-black bg-opacity-20 p-3 rounded-lg" style="background: rgba(0,0,0,0.2);">
+          I have a severe fever and doctor advised rest.
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Add Button -->
+    <div onclick="openModal('leave-modal')" style="position: fixed; bottom: 140px; right: 16px; background: #2563EB; width: 64px; height: 64px; border-radius: 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 24px rgba(37,99,235,0.4); z-index: 50; cursor: pointer; transition: transform 0.2s ease;">
+      <span style="color: white; font-size: 2.5rem; line-height: 1;">+</span>
+    </div>
+  </div>
+
+  <!-- LEAVE REQUEST MODAL -->
+  <div id="leave-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: flex-end; justify-content: center;">
+    <div style="background: #1B1E24; width: 100%; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 24px; color: white;">
+      <div class="flex justify-between items-center mb-6">
+        <h3 style="font-size: 1.25rem; font-weight: bold;">Request Leave</h3>
+        <span onclick="closeModal('leave-modal')" style="font-size: 1.5rem; color: #9CA3AF; cursor: pointer;">×</span>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm text-gray-400 mb-2">Leave Type</label>
+        <select class="input w-full" style="background: #111418; border: 1px solid #374151; color: white; appearance: none; padding-right: 32px;">
+          <option>Sick Leave</option>
+          <option>Casual Leave</option>
+          <option>Half Day</option>
+        </select>
+      </div>
+
+      <div class="flex gap-4 mb-4">
+        <div style="flex: 1;">
+          <label class="block text-sm text-gray-400 mb-2">From</label>
+          <input type="date" class="input w-full" style="background: #111418; border: 1px solid #374151; color: white;">
+        </div>
+        <div style="flex: 1;">
+          <label class="block text-sm text-gray-400 mb-2">To</label>
+          <input type="date" class="input w-full" style="background: #111418; border: 1px solid #374151; color: white;">
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm text-gray-400 mb-2">Reason</label>
+        <textarea class="input w-full" style="background: #111418; border: 1px solid #374151; color: white; height: 100px; padding: 12px; resize: none;" placeholder="Please specify the reason..."></textarea>
+      </div>
+
+      <button onclick="closeModal('leave-modal')" style="width: 100%; background: #2563EB; color: white; font-weight: 600; font-size: 1.1rem; border: none; border-radius: 12px; height: 56px; cursor: pointer;">
+        Submit Request
+      </button>
+    </div>
+  </div>
+
+  <!-- VIEW: EMPLOYEE SETTINGS -->
+  <div id="view-emp-settings" class="app-layout hidden" style="background: linear-gradient(180deg, #2D2438 0%, #111418 25%, #111418 100%); color: white;">
+    <div class="app-main" style="padding: 24px 16px; padding-top: 64px; padding-bottom: 200px; overflow-y: auto;">
+      
+      <!-- Header -->
+      <h1 class="font-bold mb-6" style="font-size: 2.5rem; letter-spacing: -1px;">Your Info<span style="color: #FBBF24;">.</span></h1>
+      
+      <!-- Profile Picture -->
+      <div style="position: relative; width: 120px; height: 120px; border-radius: 50%; background: #2D3748; display: flex; align-items: center; justify-content: center; margin-bottom: 32px;">
+        <span style="font-size: 4rem; color: #9CA3AF;">👤</span>
+        <!-- Edit Icon -->
+        <div style="position: absolute; bottom: 0; right: 0; background: #3B82F6; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #111418; cursor: pointer;">
+          <span style="font-size: 14px;">✏️</span>
+        </div>
+      </div>
+
+      <!-- Settings List -->
+      <div style="background: #1B1E24; border-radius: 16px; padding: 0 16px;">
+        
+        <!-- Item 1: Personal Details -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">📄</span>
+            <span style="font-weight: 500; font-size: 1rem;">Your Personal Details</span>
+          </div>
+          <span style="color: #9CA3AF; font-size: 1.2rem;">›</span>
+        </div>
+
+        <!-- Item 2: Leave System -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">📅</span>
+            <span style="font-weight: 500; font-size: 1rem;">Leave System</span>
+          </div>
+          <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Item 3: Face Attendance -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">🧑‍💻</span>
+            <span style="font-weight: 500; font-size: 1rem;">Face Attendance</span>
+          </div>
+          <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Item 4: Expense System -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">🧾</span>
+            <span style="font-weight: 500; font-size: 1rem;">Expense System</span>
+          </div>
+          <div class="toggle-switch" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Item 5: Geo Fencing -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">📍</span>
+            <span style="font-weight: 500; font-size: 1rem;">Geo Fencing</span>
+          </div>
+          <div class="toggle-switch" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Item 6: Custom Daywise Salary -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">💵</span>
+            <span style="font-weight: 500; font-size: 1rem;">Custom Daywise Salary</span>
+          </div>
+          <div class="toggle-switch" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- Item 7: Holidays -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">🗓️</span>
+            <span style="font-weight: 500; font-size: 1rem;">Holidays</span>
+          </div>
+          <span style="color: #9CA3AF; font-size: 1.2rem;">›</span>
+        </div>
+
+        <!-- Item 8: Pay Slips -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #374151; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">📜</span>
+            <span style="font-weight: 500; font-size: 1rem;">Pay Slips</span>
+          </div>
+          <span style="color: #9CA3AF; font-size: 1.2rem;">›</span>
+        </div>
+
+        <!-- Item 9: View Logs -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.25rem;">📊</span>
+            <span style="font-weight: 500; font-size: 1rem;">View Logs</span>
+          </div>
+          <span style="color: #9CA3AF; font-size: 1.2rem;">›</span>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <button onclick="navigateTo('view-step1')" style="width: 100%; background: #3F1D1D; color: #EF4444; font-weight: 600; font-size: 1rem; border: none; border-radius: 12px; height: 56px; margin-top: 24px; cursor: pointer; transition: transform 0.2s ease;">
+        Logout
+      </button>
+
+      <!-- App Version -->
+      <div style="text-align: center; margin-top: 32px; color: #6B7280; font-size: 0.8rem; line-height: 1.5; font-weight: 500;">
+        <div>Version 0.0.94 P4TCH 0</div>
+        <div>A cloud product of RRV SOFTECH PVT LTD</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
