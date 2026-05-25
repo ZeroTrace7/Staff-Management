@@ -6,7 +6,17 @@
 const Auth = {
   PENDING_OWNER_KEY: 'sm_pending_owner_bootstrap',
 
+  _requireClient() {
+    if (!supabase) {
+      throw new Error('Backend connection is unavailable. Refresh and try again.');
+    }
+    return supabase;
+  },
+
   _createIsolatedClient() {
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+      throw new Error('Supabase SDK is unavailable.');
+    }
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: false,
@@ -38,7 +48,8 @@ const Auth = {
 
   async signUpOwner(email, password, companyName) {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const client = this._requireClient();
+      const { data: authData, error: authError } = await client.auth.signUp({
         email,
         password
       });
@@ -82,7 +93,8 @@ const Auth = {
         throw new Error('Company name is required to finish setup.');
       }
 
-      const { data: company, error: companyError } = await supabase
+      const client = this._requireClient();
+      const { data: company, error: companyError } = await client
         .from('companies')
         .insert({
           name: trimmedCompany,
@@ -95,7 +107,7 @@ const Auth = {
         .single();
       if (companyError) throw companyError;
 
-      const { data: profile, error: userError } = await supabase
+      const { data: profile, error: userError } = await client
         .from('users')
         .insert({
           id: userId,
@@ -125,6 +137,7 @@ const Auth = {
       }
 
       const isolatedClient = this._createIsolatedClient();
+      const client = this._requireClient();
       const { data: authData, error: authError } = await isolatedClient.auth.signUp({
         email: employeeEmail,
         password: employeePassword
@@ -132,7 +145,7 @@ const Auth = {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Employee auth account was not created.');
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await client
         .from('users')
         .insert({
           id: authData.user.id,
@@ -161,7 +174,8 @@ const Auth = {
 
   async signIn(email, password) {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const client = this._requireClient();
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
       let profile = await this.getProfile();
@@ -189,50 +203,74 @@ const Auth = {
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('[Auth] signOut error:', error.message);
+    try {
+      const client = this._requireClient();
+      const { error } = await client.auth.signOut();
+      if (error) console.error('[Auth] signOut error:', error.message);
+    } catch (err) {
+      console.error('[Auth] signOut error:', err.message);
+    }
     window.location.href = 'index.html';
   },
 
   async getSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
+    try {
+      const client = this._requireClient();
+      const { data: { session } } = await client.auth.getSession();
+      return session;
+    } catch (err) {
+      console.error('[Auth] getSession error:', err.message);
+      return null;
+    }
   },
 
   async getProfile() {
     const session = await this.getSession();
     if (!session) return null;
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle();
+    try {
+      const client = this._requireClient();
+      const { data, error } = await client
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
 
-    if (error) {
-      console.error('[Auth] getProfile error:', error.message);
+      if (error) {
+        console.error('[Auth] getProfile error:', error.message);
+        return null;
+      }
+      return data || null;
+    } catch (err) {
+      console.error('[Auth] getProfile error:', err.message);
       return null;
     }
-    return data || null;
   },
 
   async getCompany(companyId) {
-    const { data, error } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('id', companyId)
-      .single();
+    try {
+      const client = this._requireClient();
+      const { data, error } = await client
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
 
-    if (error) {
-      console.error('[Auth] getCompany error:', error.message);
+      if (error) {
+        console.error('[Auth] getCompany error:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error('[Auth] getCompany error:', err.message);
       return null;
     }
-    return data;
   },
 
   async updateCompanySettings(companyId, payload) {
     try {
-      const { data, error } = await supabase
+      const client = this._requireClient();
+      const { data, error } = await client
         .from('companies')
         .update(payload)
         .eq('id', companyId)

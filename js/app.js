@@ -152,6 +152,22 @@ function clearAuthError(containerId) {
   el.classList.add('hidden');
 }
 
+function showStartupError(message) {
+  showAuthError('owner-auth-error', message);
+  showAuthError('emp-auth-error', message);
+}
+
+function showInitialView(isOwnerPage, isEmployeePage) {
+  let firstView = document.getElementById('view-step1');
+  if (isOwnerPage) firstView = document.getElementById('view-step2');
+  if (isEmployeePage) firstView = document.getElementById('view-emp-step2');
+
+  if (firstView) {
+    firstView.classList.remove('hidden');
+    firstView.classList.add('view-enter');
+  }
+}
+
 async function handleOwnerAuth() {
   const email = document.getElementById('owner-email')?.value?.trim();
   const password = document.getElementById('owner-password')?.value;
@@ -593,56 +609,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   const path = window.location.pathname;
   const isOwnerPage = path.endsWith('owner.html');
   const isEmployeePage = path.endsWith('employee.html');
+  let routed = false;
 
-  if (isOwnerPage || isEmployeePage) {
-    const session = await Auth.getSession();
-    if (session) {
-      const profile = await Auth.getProfile();
+  try {
+    if (isOwnerPage || isEmployeePage) {
+      const session = await Auth.getSession();
+      if (session) {
+        const profile = await Auth.getProfile();
 
-      if (!profile && isOwnerPage) {
-        const pending = Auth._loadPendingOwnerBootstrap?.();
-        if (pending && pending.email === session.user.email) {
-          const bootstrap = await Auth.completeOwnerBootstrap(pending.companyName, session.user.email);
-          if (!bootstrap.success) {
-            showAuthError('owner-auth-error', bootstrap.error);
+        if (!profile && isOwnerPage) {
+          const pending = Auth._loadPendingOwnerBootstrap?.();
+          if (pending && pending.email === session.user.email) {
+            const bootstrap = await Auth.completeOwnerBootstrap(pending.companyName, session.user.email);
+            if (!bootstrap.success) {
+              showAuthError('owner-auth-error', bootstrap.error);
+            }
+          }
+        }
+
+        const resolvedProfile = await Auth.getProfile();
+        if (resolvedProfile) {
+          if (resolvedProfile.role === 'admin' && !isOwnerPage) {
+            window.location.href = 'owner.html';
+            routed = true;
+            return;
+          }
+          if (resolvedProfile.role === 'employee' && !isEmployeePage) {
+            window.location.href = 'employee.html';
+            routed = true;
+            return;
+          }
+
+          if (isOwnerPage && resolvedProfile.role === 'admin') {
+            selectedRole = 'business';
+            navigateTo('view-dashboard');
+            await initializeOwnerExperience();
+            routed = true;
+            return;
+          }
+
+          if (isEmployeePage && resolvedProfile.role === 'employee') {
+            selectedRole = 'employee';
+            navigateTo('view-emp-dashboard');
+            await initializeEmployeeExperience();
+            routed = true;
+            return;
           }
         }
       }
-
-      const resolvedProfile = await Auth.getProfile();
-      if (resolvedProfile) {
-        if (resolvedProfile.role === 'admin' && !isOwnerPage) {
-          window.location.href = 'owner.html';
-          return;
-        }
-        if (resolvedProfile.role === 'employee' && !isEmployeePage) {
-          window.location.href = 'employee.html';
-          return;
-        }
-
-        if (isOwnerPage && resolvedProfile.role === 'admin') {
-          selectedRole = 'business';
-          navigateTo('view-dashboard');
-          await initializeOwnerExperience();
-          return;
-        }
-
-        if (isEmployeePage && resolvedProfile.role === 'employee') {
-          selectedRole = 'employee';
-          navigateTo('view-emp-dashboard');
-          await initializeEmployeeExperience();
-          return;
-        }
-      }
     }
+  } catch (err) {
+    console.error('[App] Startup error:', err.message);
+    showStartupError('The app could not finish startup. Refresh and try again.');
   }
 
-  let firstView = document.getElementById('view-step1');
-  if (isOwnerPage) firstView = document.getElementById('view-step2');
-  if (isEmployeePage) firstView = document.getElementById('view-emp-step2');
-
-  if (firstView) {
-    firstView.classList.remove('hidden');
-    firstView.classList.add('view-enter');
+  if (!routed) {
+    showInitialView(isOwnerPage, isEmployeePage);
   }
 });

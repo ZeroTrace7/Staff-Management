@@ -334,24 +334,36 @@ const AdminDashboard = {
   },
 
   async refresh() {
-    await Promise.all([
-      this.loadStats(),
-      this.fetchEmployees()
-    ]);
+    try {
+      await Promise.all([
+        this.loadStats(),
+        this.fetchEmployees()
+      ]);
 
-    if (!document.getElementById('view-map')?.classList.contains('hidden')) {
-      await this.loadMap();
+      if (!document.getElementById('view-map')?.classList.contains('hidden')) {
+        await this.loadMap();
+      }
+    } catch (err) {
+      console.error('[AdminDashboard] refresh error:', err.message);
+      const list = document.getElementById('staff-list');
+      if (list) {
+        list.innerHTML = '<div style="color: #FCA5A5; font-size: 0.95rem;">Dashboard data could not be loaded.</div>';
+      }
     }
   },
 
   async init() {
-    const profile = await this._ensureProfile();
-    if (!profile || profile.role !== 'admin') return;
+    try {
+      const profile = await this._ensureProfile();
+      if (!profile || profile.role !== 'admin') return;
 
-    await this._ensureCompany();
-    this.bindSearch();
-    this.subscribeRealtime();
-    await this.refresh();
+      await this._ensureCompany();
+      this.bindSearch();
+      this.subscribeRealtime();
+      await this.refresh();
+    } catch (err) {
+      console.error('[AdminDashboard] init error:', err.message);
+    }
   }
 };
 
