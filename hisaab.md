@@ -2,6 +2,8 @@
 
 > Competitive research and feature mapping for Staff Management PWA.
 > What to adopt, what to skip, and what to adapt for our scale.
+>
+> **Status:** v1 hard path is complete. Items marked ✅ DONE are implemented and working.
 
 ---
 
@@ -54,19 +56,19 @@ onboarding.frappe.cloud → Frappe-based admin onboarding
 
 ### What We WILL Adopt (adapted for PWA + Supabase)
 
-| MyHisaab Feature | Our Adaptation | Difference |
+| MyHisaab Feature | Our Adaptation | Status |
 |---|---|---|
-| **GPS Geofencing** | ✅ Same — Haversine formula, server-side validation | They use native GPS APIs; we use browser Geolocation API |
-| **Selfie at Clock-In** | ✅ Same — camera capture, stored in cloud | They do AI face matching; we store photo for admin visual review |
-| **Offline-First** | ✅ Same concept — local queue, sync when online | They use SQLite/Realm natively; we use localStorage + Service Worker |
-| **Anti-Spoofing** | ✅ Adapted — GPS jitter analysis, speed checks | They detect mock location at OS level (native advantage); we do statistical analysis |
-| **Admin Dashboard** | ✅ Same — present/absent/late cards, staff list | Nearly identical UI concept |
-| **Map View** | ✅ Same — pins on map showing clock-in locations | They likely use Google Maps; we use Leaflet + OSM (free) |
-| **UTC Timestamps** | ✅ Adopting — all timestamps in UTC, convert only in UI | They had a bug with timezone parsing that added 1.5 hours to reports — we avoid this |
-| **Attendance History** | ✅ Same — calendar view of personal records | Same concept |
-| **CSV Export** | ✅ Same — monthly report download | Same concept |
-| **Role-Based Access** | ✅ Same — admin vs employee roles | They use Frappe RBAC; we use Supabase RLS |
-| **Real-Time Updates** | ✅ Same — dashboard auto-refreshes | They use websockets; we use Supabase Realtime |
+| **GPS Geofencing** | Haversine formula, browser Geolocation API | ✅ DONE — `location.js` + `attendance.js` |
+| **Selfie at Clock-In** | Camera capture, stored in Supabase Storage | ✅ DONE — `camera.js` + mandatory in punch flow |
+| **Offline-First** | localStorage queue, sync when online | ✅ DONE — `offline-sync.js` |
+| **Anti-Spoofing** | GPS jitter analysis, speed checks, accuracy flags | ✅ DONE — `location.js` checkSpoofing() |
+| **Admin Dashboard** | Present/absent/late cards, staff list, live data | ✅ DONE — `admin-dashboard.js` |
+| **Map View** | Leaflet + OSM pins for employee locations + geofence circle | ✅ DONE — `admin-dashboard.js` loadMap() |
+| **UTC Timestamps** | All timestamps UTC, convert only in UI | ✅ DONE — `utils.js` formatters |
+| **Attendance History** | Today's logs queried per employee | ✅ DONE — `attendance.js` getTodayLogs() |
+| **CSV Export** | Monthly report download utility | ✅ DONE — `utils.js` exportToCSV() |
+| **Role-Based Access** | Admin vs employee roles, Supabase RLS | ✅ DONE — 13 RLS policies in schema.sql |
+| **Real-Time Updates** | Supabase Realtime channel subscriptions | ✅ DONE — `admin-dashboard.js` subscribeRealtime() |
 
 ### What We WON'T Build (too complex / not needed at our scale)
 
@@ -158,13 +160,13 @@ Rule: Employee can see exactly what data is stored about them
 
 ## 📋 Feature Roadmap Mapped to MyHisaab Parity
 
-| Version | Features | MyHisaab Parity |
-|---|---|---|
-| **v1** | Selfie + GPS + Geofence + Admin Dashboard + Offline Sync | ~40% feature parity |
-| **v2** | Leave Management + Live Tracking + Push Notifications | ~55% feature parity |
-| **v3** | Basic Payroll + Multi-branch + Shift Management | ~70% feature parity |
-| **v4** | AI Face Recognition + WhatsApp Integration | ~85% feature parity |
-| **v5** | POS/Commerce + Inventory + Full Accounting | ~95% feature parity |
+| Version | Features | MyHisaab Parity | Status |
+|---|---|---|---|
+| **v1** | Selfie + GPS + Geofence + Admin Dashboard + Offline Sync + Late Detection + Realtime | ~40% feature parity | ✅ **COMPLETE** |
+| **v2** | Leave Management + Live Tracking + Push Notifications | ~55% feature parity | 🔲 Not started |
+| **v3** | Basic Payroll + Multi-branch + Shift Management | ~70% feature parity | 🔲 Not started |
+| **v4** | AI Face Recognition + WhatsApp Integration | ~85% feature parity | 🔲 Not started |
+| **v5** | POS/Commerce + Inventory + Full Accounting | ~95% feature parity | 🔲 Not started |
 
 > **Reality check:** v1–v2 covers what 90% of small businesses actually need. v4–v5 are enterprise features that most 10–20 person companies will never use.
 

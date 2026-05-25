@@ -2,6 +2,8 @@
 
 > All UI patterns extracted from MyHisaab reference screenshots.
 > **This file is the visual blueprint for building Staff Management PWA.**
+>
+> **Status:** v1 UI is built. All core screens implemented. Adaptation notes below show what was kept, changed, or skipped.
 
 ---
 
@@ -561,37 +563,42 @@ Bottom nav icons:       12px (active background)
 
 ## 🔄 Adaptation Notes (MyHisaab → Our App)
 
-| MyHisaab | Our Adaptation |
-|---|---|
-| Phone OTP login | Email/password login (same clean UI, different input) |
-| 5-tab bottom nav (Map, Staff, Work, Leaves, Settings) | 4-tab bottom nav (Home, History, Profile, Settings) for employee; admin gets different tabs |
-| "hisaab." branding | "Sun Associates" company name |
-| Trial mode banner | Not needed (our app is free) |
-| Face Attendance toggle | Selfie capture (always on, not toggleable) |
-| Geo Fencing toggle | Geofencing always on (core feature) |
-| Company code invite | Admin creates employee accounts (simpler for 10 people) |
-| Dark dashboard theme | ✅ Keep — looks premium |
-| Orange progress bar | ✅ Keep — great onboarding UX |
-| Colored stat cells | ✅ Keep — instant visual scanning |
-| Settings menu pattern | ✅ Keep — clean and familiar |
+| MyHisaab | Our Adaptation | v1 Status |
+|---|---|---|
+| Phone OTP login | Email/password login (same clean UI, different input) | ✅ DONE — owner.html + employee.html |
+| 5-tab bottom nav (Map, Staff, Work, Leaves, Settings) | Same 5 tabs for owner; 5 tabs for employee (Punch, You, Work, Requests, Settings) | ✅ DONE — both navs built |
+| "hisaab." branding | "Staff Management." branding with amber period | ✅ DONE |
+| Trial mode banner | Not needed — our app is free | ✅ Removed |
+| Face Attendance toggle | Selfie capture is mandatory (not toggleable) | ✅ DONE — always enforced |
+| Geo Fencing toggle | Geofencing always on, configurable via modal | ✅ DONE — geofence modal in owner.html |
+| Company code invite | Admin creates employee accounts from dashboard | ✅ DONE — `provisionEmployee()` |
+| Dark dashboard theme | Dark theme on all dashboard/main screens | ✅ DONE |
+| Orange progress bar | 3-segment progress bar on onboarding | ✅ DONE |
+| Colored stat cells | 3×3+ grid with colored left borders | ✅ DONE — 12 stat cells |
+| Settings menu pattern | Icon + label + chevron list items | ✅ DONE — owner + employee settings |
+| Leave request screen | Pending/Approved/Rejected tabs + request form | 🔲 Placeholder UI only — no backend |
+| Map view | Full-screen Leaflet map with employee pins + geofence circle | ✅ DONE |
+| Staff roster cards | Employee cards with status, last punch, geofence distance | ✅ DONE |
+| Payroll/salary toggles | Toggle UI exists in settings | 🔲 Placeholder UI only — no backend |
+| WhatsApp report toggle | Toggle UI exists in settings | 🔲 Placeholder UI only — no backend |
 
 ---
 
-## ✅ Design Checklist (Before Building Any Screen)
+## ✅ Design Checklist
 
-- [ ] Uses dark theme for dashboard/main screens
-- [ ] Uses light theme for onboarding/auth screens
-- [ ] Heading has branded colored period (amber "**.**")
-- [ ] Stat cells use colored left-border (not background fill)
+- [x] Uses dark theme for dashboard/main screens
+- [x] Uses light theme for onboarding/auth screens
+- [x] Heading has branded colored period (amber "**.**")
+- [x] Stat cells use colored left-border (not background fill)
 - [ ] Interactive elements have focus-visible ring
-- [ ] Bottom nav uses outline icons (inactive) / filled icons (active)
-- [ ] Inputs are tall (48-52px), rounded (12px radius)
-- [ ] CTA buttons are full-width, blue, bottom of screen
+- [x] Bottom nav uses outline icons (inactive) / filled icons (active)
+- [x] Inputs are tall (48-52px), rounded (12px radius)
+- [x] CTA buttons are full-width, blue, bottom of screen
 - [ ] Filter pills are horizontally scrollable
-- [ ] Settings items follow icon + label + chevron pattern
-- [ ] Empty states have centered text
+- [x] Settings items follow icon + label + chevron pattern
+- [x] Empty states have centered text
 - [ ] Loading states use skeleton animation
-- [ ] Mobile-first: designed for 375px+ screens
+- [x] Mobile-first: designed for 375px+ screens
 
 ---
 

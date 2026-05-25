@@ -2,6 +2,8 @@
 
 > Deep analysis of PresenTrak's features, pricing, architecture, and business model.
 > Source: Proposal PDF (dated 07/05/2025) + website research + market analysis.
+>
+> **Status:** v1 hard path is complete. Items marked ✅ DONE are implemented and working.
 
 ---
 
@@ -71,14 +73,14 @@
 ### Module 1: Attendance Management
 | Feature | Description | Our Equivalent |
 |---|---|---|
-| GPS-based mobile check-in/out | Employees mark attendance from phone with location | ✅ v1 — GPS mandatory clock-in |
+| GPS-based mobile check-in/out | Employees mark attendance from phone with location | ✅ **DONE** — GPS mandatory clock-in |
 | Biometric integration | Fingerprint/hardware scanner support | ❌ Skip — needs hardware, not PWA-compatible |
 | Facial recognition | AI face matching at check-in | ❌ Skip v1 — we use selfie photo instead |
 | Kiosk attendance | Tablet/kiosk at office entry | ❌ Skip — over-engineered for 10 employees |
-| Real-time monitoring | Live dashboard of who's present/absent | ✅ v1 — Supabase Realtime |
-| Late entry tracking | Auto-flag if employee clocks in after shift start | ✅ v1 — compare timestamp vs `work_start_time` |
+| Real-time monitoring | Live dashboard of who's present/absent | ✅ **DONE** — Supabase Realtime |
+| Late entry tracking | Auto-flag if employee clocks in after shift start | ✅ **DONE** — compare timestamp vs `work_start_time` |
 | Overtime calculation | Track hours beyond shift end | 📋 v2 |
-| Working hours calculation | Auto-calculate daily/weekly/monthly hours | ✅ v1 — clock_in minus clock_out |
+| Working hours calculation | Auto-calculate daily/weekly/monthly hours | 📋 v2 — data exists, UI not built yet |
 
 ### Module 2: Leave & Shift Scheduling
 | Feature | Description | Our Equivalent |
@@ -100,26 +102,26 @@
 ### Module 4: Dashboard & Reports
 | Feature | Description | Our Equivalent |
 |---|---|---|
-| Detailed attendance summaries | Daily/weekly/monthly reports | ✅ v1 — admin dashboard |
+| Detailed attendance summaries | Daily/weekly/monthly reports | ✅ **DONE** — admin dashboard with live stats |
 | Analytics & insights | Attendance trends, patterns | 📋 v2 |
-| Exportable reports (Excel/PDF) | Download reports in Excel or PDF | ✅ v1 — CSV export |
-| Real-time analytics | Live workforce data | ✅ v1 — Supabase Realtime |
+| Exportable reports (Excel/PDF) | Download reports in Excel or PDF | ✅ **DONE** — CSV export (utils.js) |
+| Real-time analytics | Live workforce data | ✅ **DONE** — Supabase Realtime subscriptions |
 
 ### Module 5: Employee Self-Service
 | Feature | Description | Our Equivalent |
 |---|---|---|
-| Employee/parent login portal | View own attendance and notifications | ✅ v1 — employee dashboard |
-| View attendance history | Calendar view of past attendance | ✅ v1 |
+| Employee/parent login portal | View own attendance and notifications | ✅ **DONE** — employee dashboard |
+| View attendance history | Calendar view of past attendance | ✅ **DONE** — today's logs restore on reload |
 | View payslips | Access salary slips | 💡 v3 |
 | Apply for leave | Digital leave request | 📋 v2 |
 
 ### Module 6: Platform & Infrastructure
 | Feature | Description | Our Equivalent |
 |---|---|---|
-| Mobile app (Android/iOS) | Native mobile app | ✅ v1 — PWA (installable, no app store) |
-| Web access | Browser-based dashboard | ✅ v1 — Vercel hosted |
-| Cloud-based | Hosted on cloud servers | ✅ v1 — Supabase cloud |
-| Encrypted data storage | Secure cloud storage | ✅ v1 — Supabase RLS + HTTPS |
+| Mobile app (Android/iOS) | Native mobile app | ✅ **DONE** — PWA (installable, no app store) |
+| Web access | Browser-based dashboard | ✅ **DONE** — static hosted |
+| Cloud-based | Hosted on cloud servers | ✅ **DONE** — Supabase cloud |
+| Encrypted data storage | Secure cloud storage | ✅ **DONE** — Supabase RLS + HTTPS |
 | Automated backups | Regular data backups | ✅ Supabase handles this (free tier) |
 | Multi-location support | Track across branches | 💡 v3 |
 
@@ -238,21 +240,31 @@ PresenTrak targets these sectors:
 
 ## 💡 Features We Should Adopt (Priority Order)
 
-### Immediate (add to v1 scope if possible)
-1. ✅ **Working hours calculation** — clock_out minus clock_in = hours worked per day
-2. ✅ **Late entry flagging** — compare clock-in time vs `work_start_time`
+### Immediate (v1 — COMPLETE)
+1. ✅ **DONE — GPS mandatory clock-in/out** — `attendance.js` + `location.js`
+2. ✅ **DONE — Mandatory selfie capture** — `camera.js` + employee camera view
+3. ✅ **DONE — Geofence validation** — Haversine check, `is_geofence_valid` stored
+4. ✅ **DONE — Late entry flagging** — compare clock-in time vs `work_start_time`
+5. ✅ **DONE — Admin dashboard with live stats** — `admin-dashboard.js`
+6. ✅ **DONE — Leaflet map with employee locations** — geofence circle overlay
+7. ✅ **DONE — Offline attendance queue** — localStorage + auto-sync
+8. ✅ **DONE — Anti-spoofing** — jitter, teleport, accuracy analysis
+9. ✅ **DONE — Admin-created employee accounts** — isolated Supabase client
+10. ✅ **DONE — RLS-secured database** — 13 policies across 4 tables
 
 ### v2 (next update)
 3. 📋 **Leave management** — apply, approve, balance tracking
 4. 📋 **Shift management** — create shifts, assign employees
-5. 📋 **Digital payslips** — generate PDF salary slips
+5. 📋 **Working hours display** — clock_out minus clock_in per day
 6. 📋 **Overtime calculation** — hours beyond shift end
 7. 📋 **Custom branding** — company logo, theme colors
+8. 📋 **Push notifications** — punch alerts for admins
 
 ### v3 (future)
-8. 💡 **Full payroll integration** — allowances, deductions, tax
-9. 💡 **Multi-location** — multiple offices
-10. 💡 **Route tracking** — employee movement history
+9. 💡 **Full payroll integration** — allowances, deductions, tax
+10. 💡 **Digital payslips** — generate PDF salary slips
+11. 💡 **Multi-location** — multiple offices
+12. 💡 **Route tracking** — employee movement history
 
 ---
 
