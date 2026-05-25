@@ -16,7 +16,7 @@ Staff Management is a **Progressive Web App** that lets small teams (5–50 empl
 
 ---
 
-## ✨ Features (Phase 1)
+## ✨ Features (v1)
 
 | Feature | Description |
 |---|---|
@@ -63,7 +63,7 @@ Staff Management is a **Progressive Web App** that lets small teams (5–50 empl
 | Leaflet/OSM | Low-traffic use | Admin-only map view | ₹0 |
 | **TOTAL** | — | — | **₹0/month** |
 
-> **Note:** Using email/password auth keeps this genuinely ₹0. Phone OTP (Phase 2+) would add ~₹15-66/month via an Indian SMS provider.
+> **Note:** Using email/password auth keeps this genuinely ₹0. Phone OTP (v2+) would add ~₹15-66/month via an Indian SMS provider.
 
 ---
 
@@ -122,7 +122,7 @@ INDEX idx_attendance_company_id ON attendance_logs(company_id)
 INDEX idx_attendance_timestamp ON attendance_logs(timestamp)
 ```
 
-### `last_known_locations` (Phase 1 — Passive Tracking)
+### `last_known_locations` (v1 — Passive Tracking)
 ```sql
 id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
 user_id         UUID        REFERENCES users(id) UNIQUE  -- one row per employee
@@ -137,7 +137,7 @@ INDEX idx_last_location_user ON last_known_locations(user_id)
 INDEX idx_last_location_company ON last_known_locations(company_id)
 ```
 
-### `location_pings` (Phase 2 — Live Tracking History)
+### `location_pings` (v2 — Live Tracking History)
 ```sql
 id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
 user_id         UUID        REFERENCES users(id)
@@ -177,7 +177,7 @@ CREATE POLICY "admins_company_access" ON attendance_logs
 
 Since knowing where employees are is critical, we use a 3-layer system:
 
-### Layer 1 — GPS Mandatory for Clock-In (Phase 1)
+### Layer 1 — GPS Mandatory for Clock-In (v1)
 
 | Technique | What it does |
 |---|---|
@@ -189,7 +189,7 @@ Since knowing where employees are is critical, we use a 3-layer system:
 | **Store raw accuracy** | Admin can see exactly how accurate each reading was |
 | **Distance logging** | Every clock-in stores `distance_from_office` in meters |
 
-### Layer 2 — Last Known Location Logging (Phase 1)
+### Layer 2 — Last Known Location Logging (v1)
 
 | Technique | What it does |
 |---|---|
@@ -199,7 +199,7 @@ Since knowing where employees are is critical, we use a 3-layer system:
 | **Battery-friendly** | Only captures on app open/foreground, no background drain |
 | **Graceful fallback** | If GPS denied at app-open, skips silently (only mandatory at clock-in) |
 
-### Layer 3 — Anti-Spoofing Detection (Phase 1)
+### Layer 3 — Anti-Spoofing Detection (v1)
 
 | Technique | What it does |
 |---|---|
@@ -209,7 +209,7 @@ Since knowing where employees are is critical, we use a 3-layer system:
 | **Accuracy anomaly** | Mock GPS apps often report `accuracy: 0` or `accuracy: 1` — unnaturally perfect |
 | **Admin flag** | Suspicious readings get a ⚠️ badge in admin dashboard for manual review |
 
-### Phase 2 — Strict Enforcement (Future)
+### v2 — Strict Enforcement (Future)
 
 | Feature | What it adds |
 |---|---|
@@ -362,25 +362,25 @@ Employee clocks in with no internet
 
 ## 🗺️ Roadmap
 
-| Phase | Feature | Status |
+| Version | Feature | Status |
 |---|---|---|
-| **1** | Core attendance (selfie + GPS) | 🔨 Building |
-| **1** | GPS mandatory for clock-in (blocked if OFF) | 🔨 Building |
-| **1** | Last known location logging (app-open pings) | 🔨 Building |
-| **1** | Anti-spoofing (jitter + teleport + consistency) | 🔨 Building |
-| **1** | Email auth (admin + employee) | 🔨 Building |
-| **1** | Admin dashboard with stats + map | 🔨 Building |
-| **1** | PWA + offline sync (Android primary) | 🔨 Building |
-| **2** | Strict geofence enforcement (reject out-of-zone) | 📋 Planned |
-| **2** | Selfie + GPS combo verification (tamper-proof) | 📋 Planned |
-| **2** | iOS optimization (fallbacks, install guide) | 📋 Planned |
-| **2** | Phone OTP login (via Indian SMS provider) | 📋 Planned |
-| **2** | Leave management system | 📋 Planned |
-| **2** | Live location tracking (location_pings) | 📋 Planned |
-| **2** | Push notifications (attendance reminders) | 📋 Planned |
-| **3** | Multi-branch/location support | 💡 Idea |
-| **3** | Payroll integration | 💡 Idea |
-| **3** | Face recognition verification | 💡 Idea |
+| **v1** | Core attendance (selfie + GPS) | 🔨 Building |
+| **v1** | GPS mandatory for clock-in (blocked if OFF) | 🔨 Building |
+| **v1** | Last known location logging (app-open pings) | 🔨 Building |
+| **v1** | Anti-spoofing (jitter + teleport + consistency) | 🔨 Building |
+| **v1** | Email auth (admin + employee) | 🔨 Building |
+| **v1** | Admin dashboard with stats + map | 🔨 Building |
+| **v1** | PWA + offline sync (Android primary) | 🔨 Building |
+| **v2** | Strict geofence enforcement (reject out-of-zone) | 📋 Planned |
+| **v2** | Selfie + GPS combo verification (tamper-proof) | 📋 Planned |
+| **v2** | iOS optimization (fallbacks, install guide) | 📋 Planned |
+| **v2** | Phone OTP login (via Indian SMS provider) | 📋 Planned |
+| **v2** | Leave management system | 📋 Planned |
+| **v2** | Live location tracking (location_pings) | 📋 Planned |
+| **v2** | Push notifications (attendance reminders) | 📋 Planned |
+| **v3** | Multi-branch/location support | 💡 Idea |
+| **v3** | Payroll integration | 💡 Idea |
+| **v3** | Face recognition verification | 💡 Idea |
 
 ---
 

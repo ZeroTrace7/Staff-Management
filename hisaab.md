@@ -72,11 +72,11 @@ onboarding.frappe.cloud → Frappe-based admin onboarding
 
 | MyHisaab Feature | Why We Skip It | Revisit When? |
 |---|---|---|
-| **AI Face Recognition** | Requires GPU server ($50+/month), DeepFace pipeline, vector DB. Overkill for 10 employees where admin knows everyone. | Phase 3+ if scaling to 100+ unknown employees |
+| **AI Face Recognition** | Requires GPU server ($50+/month), DeepFace pipeline, vector DB. Overkill for 10 employees where admin knows everyone. | v3+ if scaling to 100+ unknown employees |
 | **Frappe/ERPNext Backend** | Massive framework. Supabase gives us DB + Auth + Storage + API for free with zero backend code. | Never — Supabase is the better choice for our scale |
-| **n8n Workflow Engine** | Self-hosted automation server. Unnecessary when we have 10 users and can handle everything client-side. | Phase 3+ for automated notifications/integrations |
-| **WhatsApp AI Assistant** | Requires OpenAI API ($), WhatsApp Business API ($), n8n, MongoDB, RAG pipeline. Cool but massive cost and complexity. | Phase 4+ as a premium feature |
-| **Double-Entry Ledger** | Full accounting system with triggers, materialized views, check constraints. We're not building payroll in Phase 1. | Phase 3 when payroll is added |
+| **n8n Workflow Engine** | Self-hosted automation server. Unnecessary when we have 10 users and can handle everything client-side. | v3+ for automated notifications/integrations |
+| **WhatsApp AI Assistant** | Requires OpenAI API ($), WhatsApp Business API ($), n8n, MongoDB, RAG pipeline. Cool but massive cost and complexity. | v4+ as a premium feature |
+| **Double-Entry Ledger** | Full accounting system with triggers, materialized views, check constraints. We're not building payroll in v1. | v3 when payroll is added |
 | **TigerBeetle** | Specialized financial DB for millions of transactions/second. We have 10 employees. | Never — PostgreSQL handles our scale easily |
 | **Multi-Cloud Deployment** | AWS + GCP + DigitalOcean redundancy. We're on Vercel free tier with 10 users. | If we ever need 99.99% uptime SLA |
 | **React Native App** | Native mobile app with deep OS access. We're a PWA — lighter, free to deploy, no app store. | If iOS limitations become unacceptable |
@@ -109,8 +109,8 @@ Rule: Server never touches timezone — it only knows UTC
 **Our prevention:**
 ```
 Rule: GPS captured ONLY at clock-in and clock-out moments
-Rule: No continuous background tracking in Phase 1
-Rule: Location_pings (Phase 2) only during designated work hours
+Rule: No continuous background tracking in v1
+Rule: Location_pings (v2) only during designated work hours
 Rule: Employee can see exactly what data is stored about them
 ```
 
@@ -158,15 +158,15 @@ Rule: Employee can see exactly what data is stored about them
 
 ## 📋 Feature Roadmap Mapped to MyHisaab Parity
 
-| Phase | Features | MyHisaab Parity |
+| Version | Features | MyHisaab Parity |
 |---|---|---|
-| **Phase 1** | Selfie + GPS + Geofence + Admin Dashboard + Offline Sync | ~40% feature parity |
-| **Phase 2** | Leave Management + Live Tracking + Push Notifications | ~55% feature parity |
-| **Phase 3** | Basic Payroll + Multi-branch + Shift Management | ~70% feature parity |
-| **Phase 4** | AI Face Recognition + WhatsApp Integration | ~85% feature parity |
-| **Phase 5** | POS/Commerce + Inventory + Full Accounting | ~95% feature parity |
+| **v1** | Selfie + GPS + Geofence + Admin Dashboard + Offline Sync | ~40% feature parity |
+| **v2** | Leave Management + Live Tracking + Push Notifications | ~55% feature parity |
+| **v3** | Basic Payroll + Multi-branch + Shift Management | ~70% feature parity |
+| **v4** | AI Face Recognition + WhatsApp Integration | ~85% feature parity |
+| **v5** | POS/Commerce + Inventory + Full Accounting | ~95% feature parity |
 
-> **Reality check:** Phase 1–2 covers what 90% of small businesses actually need. Phases 4–5 are enterprise features that most 10–20 person companies will never use.
+> **Reality check:** v1–v2 covers what 90% of small businesses actually need. v4–v5 are enterprise features that most 10–20 person companies will never use.
 
 ---
 
@@ -192,7 +192,7 @@ Rule: Employee can see exactly what data is stored about them
 | **AI Face Recognition** | Can verify identity, not just capture photo | Admin visual verification works for 10–20 known employees |
 | **OS-level mock location detection** | Can detect GPS spoofing apps directly | We use statistical anti-spoofing (jitter + speed analysis) |
 | **Native offline DB (SQLite)** | More robust than localStorage | Service Worker + IndexedDB gives us similar capability |
-| **Payroll automation** | Auto-calculates salary from attendance | Planned for Phase 3 |
+| **Payroll automation** | Auto-calculates salary from attendance | Planned for v3 |
 | **Dedicated support team** | Professional customer service | You ARE the admin and developer — direct control |
 
 ---
