@@ -78,9 +78,11 @@ ALTER TABLE attendance_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE last_known_locations ENABLE ROW LEVEL SECURITY;
 
 -- Users RLS Policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON users;
 CREATE POLICY "Users can view their own profile" 
 ON users FOR SELECT USING ((SELECT auth.uid()) = id);
 
+DROP POLICY IF EXISTS "Admins can view all users in their company" ON users;
 CREATE POLICY "Admins can view all users in their company" 
 ON users FOR SELECT USING (
     company_id IN (
@@ -88,6 +90,7 @@ ON users FOR SELECT USING (
     )
 );
 
+DROP POLICY IF EXISTS "Admins can insert users in their company" ON users;
 CREATE POLICY "Admins can insert users in their company" 
 ON users FOR INSERT WITH CHECK (
     company_id IN (
@@ -96,12 +99,15 @@ ON users FOR INSERT WITH CHECK (
 );
 
 -- Attendance Logs RLS Policies
+DROP POLICY IF EXISTS "Employees can view and insert their own attendance" ON attendance_logs;
 CREATE POLICY "Employees can view and insert their own attendance" 
 ON attendance_logs FOR SELECT USING ((SELECT auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Employees can insert their own attendance" ON attendance_logs;
 CREATE POLICY "Employees can insert their own attendance" 
 ON attendance_logs FOR INSERT WITH CHECK ((SELECT auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Admins can view company attendance logs" ON attendance_logs;
 CREATE POLICY "Admins can view company attendance logs" 
 ON attendance_logs FOR SELECT USING (
     company_id IN (
@@ -110,9 +116,11 @@ ON attendance_logs FOR SELECT USING (
 );
 
 -- Last Known Locations RLS
+DROP POLICY IF EXISTS "Employees can update their own location" ON last_known_locations;
 CREATE POLICY "Employees can update their own location" 
 ON last_known_locations FOR ALL USING ((SELECT auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Admins can view company locations" ON last_known_locations;
 CREATE POLICY "Admins can view company locations" 
 ON last_known_locations FOR SELECT USING (
     company_id IN (
@@ -121,6 +129,7 @@ ON last_known_locations FOR SELECT USING (
 );
 
 -- Companies RLS
+DROP POLICY IF EXISTS "Users can view their own company" ON companies;
 CREATE POLICY "Users can view their own company" 
 ON companies FOR SELECT USING (
     id IN (SELECT company_id FROM users WHERE id = (SELECT auth.uid()))
