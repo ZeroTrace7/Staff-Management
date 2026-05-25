@@ -68,6 +68,27 @@ CREATE TABLE IF NOT EXISTS last_known_locations (
 CREATE INDEX IF NOT EXISTS idx_last_location_user ON last_known_locations(user_id);
 CREATE INDEX IF NOT EXISTS idx_last_location_company ON last_known_locations(company_id);
 
+-- Helper functions keep RLS policies from recursively querying users as the caller.
+CREATE OR REPLACE FUNCTION public.current_user_company_id()
+RETURNS UUID
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT company_id FROM public.users WHERE id = auth.uid() LIMIT 1
+$$;
+
+CREATE OR REPLACE FUNCTION public.current_user_is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+    )
+$$;
+
 -- ==========================================
 -- 5. ROW LEVEL SECURITY (RLS)
 -- ==========================================
@@ -118,18 +139,16 @@ ON users FOR SELECT USING (id = auth.uid());
 DROP POLICY IF EXISTS "Admins can view all users in their company" ON users;
 CREATE POLICY "Admins can view all users in their company"
 ON users FOR SELECT USING (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
 );
 
 -- Admins can insert employees into their company (for provisioning)
 DROP POLICY IF EXISTS "Admins can insert users in their company" ON users;
 CREATE POLICY "Admins can insert users in their company"
 ON users FOR INSERT WITH CHECK (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
 );
 
 -- Admins can update users in their company (activate/deactivate)
@@ -137,14 +156,12 @@ DROP POLICY IF EXISTS "Admins can update users in their company" ON users;
 CREATE POLICY "Admins can update users in their company"
 ON users FOR UPDATE
 USING (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
 )
 WITH CHECK (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
 );
 
 -- ─── ATTENDANCE LOGS ────────────────────────────────────────────────────────
