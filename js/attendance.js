@@ -108,7 +108,11 @@ const Attendance = {
       return { success: true, offline: true, record };
     }
 
-    throw new Error(error.message || 'Attendance could not be saved.');
+    const message = String(error.message || '');
+    if (message.toLowerCase().includes('row-level security')) {
+      throw new Error('Attendance save is not allowed yet. Ask the owner to update attendance permissions.');
+    }
+    throw new Error(message || 'Attendance could not be saved.');
   },
 
   async clockIn(selfieBlob) {
@@ -144,7 +148,7 @@ const Attendance = {
   },
 
   async _updateLastKnownLocation(profile, posData) {
-    await getSupabaseClient().from('last_known_locations').upsert({
+    const { error } = await getSupabaseClient().from('last_known_locations').upsert({
       user_id: profile.id,
       company_id: profile.company_id,
       lat: posData.lat,
@@ -152,6 +156,9 @@ const Attendance = {
       accuracy_meters: posData.accuracy,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' });
+    if (error) {
+      console.error('[Attendance] _updateLastKnownLocation error:', error.message);
+    }
   },
 
   async getTodayLogs() {

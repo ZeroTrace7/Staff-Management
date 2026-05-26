@@ -87,6 +87,12 @@ const CameraService = {
 
     if (error) {
       console.error('[Camera] Upload error:', error.message);
+      if (String(error.message || '').toLowerCase().includes('row-level security')) {
+        return {
+          success: false,
+          error: 'Selfie upload is not allowed yet. Ask the owner to update storage permissions.'
+        };
+      }
       return { success: false, error: error.message };
     }
 

@@ -89,6 +89,10 @@ AS $$
     )
 $$;
 
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('selfies', 'selfies', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
 -- ==========================================
 -- 5. ROW LEVEL SECURITY (RLS)
 -- ==========================================
@@ -186,15 +190,17 @@ ON attendance_logs FOR SELECT USING (user_id = auth.uid());
 -- Employees can insert their own attendance
 DROP POLICY IF EXISTS "Users can insert their own attendance" ON attendance_logs;
 CREATE POLICY "Users can insert their own attendance"
-ON attendance_logs FOR INSERT WITH CHECK (user_id = auth.uid());
+ON attendance_logs FOR INSERT WITH CHECK (
+    user_id = auth.uid()
+    AND company_id = public.current_user_company_id()
+);
 
 -- Admins can view all attendance in their company
 DROP POLICY IF EXISTS "Admins can view company attendance logs" ON attendance_logs;
 CREATE POLICY "Admins can view company attendance logs"
 ON attendance_logs FOR SELECT USING (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
 );
 
 -- ─── LAST KNOWN LOCATIONS ───────────────────────────────────────────────────
@@ -204,15 +210,43 @@ DROP POLICY IF EXISTS "Users can manage their own location" ON last_known_locati
 CREATE POLICY "Users can manage their own location"
 ON last_known_locations FOR ALL
 USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
+WITH CHECK (
+    user_id = auth.uid()
+    AND company_id = public.current_user_company_id()
+);
 
 -- Admins can view all locations in their company
 DROP POLICY IF EXISTS "Admins can view company locations" ON last_known_locations;
 CREATE POLICY "Admins can view company locations"
 ON last_known_locations FOR SELECT USING (
-    company_id IN (
-        SELECT company_id FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.current_user_is_admin()
+    AND company_id = public.current_user_company_id()
+);
+
+-- ─── STORAGE: SELFIES ──────────────────────────────────────────────────────
+
+DROP POLICY IF EXISTS "Users can upload own selfies" ON storage.objects;
+CREATE POLICY "Users can upload own selfies"
+ON storage.objects FOR INSERT WITH CHECK (
+    bucket_id = 'selfies'
+    AND auth.role() = 'authenticated'
+    AND split_part(name, '/', 1) = public.current_user_company_id()::TEXT
+    AND split_part(name, '/', 2) = auth.uid()::TEXT
+);
+
+DROP POLICY IF EXISTS "Users can view own selfies" ON storage.objects;
+CREATE POLICY "Users can view own selfies"
+ON storage.objects FOR SELECT USING (
+    bucket_id = 'selfies'
+    AND split_part(name, '/', 2) = auth.uid()::TEXT
+);
+
+DROP POLICY IF EXISTS "Admins can view company selfies" ON storage.objects;
+CREATE POLICY "Admins can view company selfies"
+ON storage.objects FOR SELECT USING (
+    bucket_id = 'selfies'
+    AND public.current_user_is_admin()
+    AND split_part(name, '/', 1) = public.current_user_company_id()::TEXT
 );
 
 -- ==========================================
