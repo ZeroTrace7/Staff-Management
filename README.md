@@ -1,194 +1,139 @@
-# Staff Management
+# 📱 Staff Management PWA
 
-Android-first attendance PWA for small teams. The v1 hard path is:
+<div align="center">
+  <strong>An Android-first, offline-capable attendance Progressive Web App (PWA) for small teams.</strong>
+</div>
+<br/>
 
-`Owner signup -> company bootstrap -> geofence setup -> admin-created employees -> employee selfie + GPS punch -> owner live review`
+The Staff Management PWA provides a seamless, zero-cost, browser-based employee attendance system. It utilizes **Supabase** for backend services (Auth, Postgres Database, Storage) and native Web APIs (Camera, Geolocation) for a robust attendance tracking system with anti-spoofing mechanisms.
 
-## Current Status
+---
 
-Implemented now:
+## 🌟 Key Features
 
-- Owner account bootstrap with company creation
-- Company geofence setup and editable work start time
-- Admin-created employee accounts from the owner dashboard
-- Employee sign-in with role-safe routing
-- Mandatory selfie capture for punch in/out
-- Mandatory GPS capture with geofence validation
-- Attendance writes to Supabase with `is_geofence_valid` and `distance_from_office`
-- Last known location updates
-- Owner dashboard stats, staff roster, map, and realtime refresh
-- Offline attendance queue with retry on reconnect
+### 🏢 For Business Owners (Admins)
+- **Zero-Friction Bootstrap:** Create a company profile and set up a workspace in seconds.
+- **Geofence Configuration:** Set office coordinates and a valid punch-in radius.
+- **Employee Provisioning:** Securely create and manage employee accounts directly from the dashboard.
+- **Live Dashboard:** Real-time visibility into active heads, present staff, absentees, and late arrivals.
+- **Live Map View:** Track employee locations visually via Leaflet and OpenStreetMap.
 
-Still placeholder UI only:
+### 👷 For Employees
+- **Role-Safe Portal:** Secure login with temporary credentials provided by the admin.
+- **Selfie Verification:** Mandatory selfie capture using the device camera (`getUserMedia`) before punching in or out.
+- **GPS Validation:** Mandatory location capture with anti-spoofing and geofence distance calculation.
+- **Offline Resilience:** Punch records queue up locally when offline and sync automatically upon reconnection.
 
-- Leave management
-- Payroll and salary settings
-- Expense system
-- Payslips
-- Work tab/project tracking
-- Holiday management
+---
 
-## Stack
+## 🚀 The Core Workflow (v1)
 
-- Vanilla HTML/CSS/JS
-- Supabase Auth + Postgres + Storage + Realtime
-- Browser Geolocation API
-- Browser Camera API (`getUserMedia`)
-- Leaflet + OpenStreetMap
-- Service worker for app shell caching
+1. **Owner Signup:** Create an account and initialize a company workspace.
+2. **Geofence Setup:** Define the valid office boundary and start time.
+3. **Staff Creation:** Owner generates employee credentials for the team.
+4. **Employee Login:** Staff signs in on their mobile device.
+5. **Secure Punch:** Employee takes a fresh selfie and records high-accuracy GPS coordinates.
+6. **Live Review:** Owner monitors attendance and geo-compliance in real-time from the dashboard.
 
-## Project Structure
+---
+
+## 🛠️ Technology Stack
+
+**Frontend**
+- Vanilla HTML5, CSS3, JavaScript (ES6+)
+- Service Worker for offline app shell caching
+- Leaflet.js + OpenStreetMap for live tracking
+
+**Backend & Database**
+- **Supabase** (PostgreSQL Database)
+- **Supabase Auth** (Role-based access control)
+- **Supabase Storage** (Selfie retention)
+- **Supabase Realtime** (Live dashboard updates via websockets)
+
+**Native Browser APIs**
+- Geolocation API (High-accuracy GPS tracking)
+- MediaDevices API / Camera (Live selfie capture)
+
+---
+
+## 📂 Project Structure
 
 ```text
 Staff Management/
-├── index.html
-├── owner.html
-├── employee.html
-├── manifest.json
-├── service-worker.js
+├── index.html            # Role selection (Owner vs Employee)
+├── owner.html            # Admin dashboard, staff management, map view
+├── employee.html         # Employee punch portal, offline queue
+├── manifest.json         # PWA configuration
+├── service-worker.js     # Offline app-shell caching
 ├── css/
-│   └── style.css
+│   └── style.css         # Application styling
 ├── js/
-│   ├── supabase-client.js
-│   ├── auth.js
-│   ├── app.js
-│   ├── attendance.js
-│   ├── admin-dashboard.js
-│   ├── camera.js
-│   ├── location.js
-│   ├── offline-sync.js
-│   └── utils.js
+│   ├── app.js            # Core routing and init logic
+│   ├── attendance.js     # Punch-in/out logic & spoof detection
+│   ├── auth.js           # Supabase auth wrapper & role management
+│   ├── admin-dashboard.js# Owner live statistics & realtime listeners
+│   ├── camera.js         # Selfie capture & storage upload
+│   ├── location.js       # GPS, geofencing, and distance calc
+│   ├── offline-sync.js   # LocalStorage queuing and background sync
+│   └── supabase-client.js# Supabase initialization
 └── supabase/
-    └── schema.sql
+    └── schema.sql        # Postgres tables, RLS policies, triggers
 ```
 
-## Data Model
+---
 
-Active tables for v1:
+## 🔒 Security & Data Integrity
 
-- `companies`
-- `users`
-- `attendance_logs`
-- `last_known_locations`
+- **Row Level Security (RLS):** Supabase database policies ensure employees can only write their own records, and owners can only view their company's data.
+- **Anti-Spoofing Engine:**
+  - *Teleport Detection:* Flags unnatural movement speeds (>120 km/h).
+  - *Jitter Detection:* Flags identical repeated coordinates commonly caused by mock-location apps.
+  - *Accuracy Thresholds:* Flags low-accuracy GPS pings (>150 meters).
 
-`location_pings` is not part of the current runtime path.
+---
 
-## Auth Model
+## ⚙️ Setup & Deployment
 
-- Owners sign up from `owner.html`
-- Employees do not self-register
-- Owners create employee credentials from the owner dashboard
-- Employees only sign in from `employee.html`
-- If a signed-in user lands on the wrong portal, the app redirects to the correct one
+### 1. Supabase Configuration
+1. Create a new [Supabase](https://supabase.com) project.
+2. Navigate to the SQL Editor and run the contents of `supabase/schema.sql` to generate tables and RLS policies.
+3. Create a **public** storage bucket named `selfies`.
+4. Enable **Email/Password** authentication in Auth Settings.
+   - *Recommendation:* Disable mandatory email confirmation for a smoother v1 bootstrap flow.
+5. Retrieve your `Project URL` and `anon key` from the project settings.
 
-## Attendance Model
+### 2. Client Configuration
+Update `js/supabase-client.js` with your specific Supabase credentials:
 
-Employee punch flow:
+```javascript
+const SUPABASE_URL = 'https://your-project-id.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key';
+```
 
-1. Confirm punch action
-2. Camera opens
-3. Employee captures a fresh selfie
-4. App reads GPS
-5. App uploads selfie to Supabase Storage
-6. App computes geofence distance
-7. App inserts the attendance log
+### 3. Local Development
+Since the app uses standard web technologies, any static file server works:
 
-Each attendance record stores:
-
-- `type`
-- `selfie_url`
-- `lat` / `lng`
-- `accuracy_meters`
-- `timestamp`
-- `is_geofence_valid`
-- `distance_from_office`
-- `spoof_flags`
-- `synced_offline`
-
-## Owner Dashboard
-
-The owner dashboard now reads live Supabase data for:
-
-- total active heads
-- employees
-- admins
-- present
-- not marked / absent
-- late arrivals
-- outside-zone punches
-- clocked-out staff
-- last known locations
-
-The map view uses Leaflet and renders:
-
-- employee last known positions
-- company geofence circle
-
-Realtime refresh is driven by Supabase channel subscriptions on:
-
-- `attendance_logs`
-- `last_known_locations`
-- `users`
-
-## Offline Behavior
-
-What works:
-
-- attendance records queue locally when the network is down
-- queued records sync when the browser comes back online
-
-What does not exist in v1:
-
-- true background sync from the service worker
-- IndexedDB-backed queueing
-
-The queue currently lives in `localStorage`, so sync is client-driven on reconnect.
-
-## Setup
-
-### 1. Supabase
-
-1. Create a Supabase project
-2. Run `supabase/schema.sql`
-3. Create a public storage bucket named `selfies`
-4. Enable Email/Password auth
-5. Copy the project URL and anon key
-
-### 2. Configure the client
-
-Update [js/supabase-client.js](./js/supabase-client.js) with your real Supabase URL and anon key before deployment if you are pointing at a different project.
-
-### 3. Auth recommendation
-
-For the smoothest v1 bootstrap flow, disable mandatory email confirmation in Supabase Auth.
-
-If email confirmation stays enabled, owner bootstrap completes after sign-in only when the pending signup is resumed in the same browser context that started it.
-
-### 4. Run locally
-
-Any static file server is fine. Example:
-
-```powershell
+```bash
+# Using Python
 python -m http.server 8080
+
+# Using Node.js
+npx serve .
 ```
+Navigate to `http://localhost:8080/index.html` to view the application.
 
-Then open:
+---
 
-- `http://localhost:8080/index.html`
+## 🚧 Roadmap & Future Scope
 
-## Validation Checklist
+While the v1 *Attendance Hard Path* is fully complete, placeholder UI exists for the following upcoming modules:
+- Leave Management & Approval Workflows
+- Payroll & Salary Configuration
+- Employee Expense Tracking
+- Holiday Management & Shift Scheduling
+- True background sync via IndexedDB (currently relies on `localStorage` queueing)
 
-- Owner can sign up and land on the dashboard
-- Owner can set a geofence
-- Owner can create an employee account
-- Employee can sign in
-- Employee must capture a selfie before punching
-- Employee punch stores GPS and geofence distance
-- Reload after punch-in restores the punch-out state
-- Owner dashboard updates after employee attendance changes
-
-## Known Constraints
-
-- Employee auth creation uses the public client with an isolated non-persistent Supabase session
-- Offline queue is `localStorage`-based, not IndexedDB-based
-- Leave/payroll/settings screens are mostly placeholders beyond attendance configuration
+---
+<div align="center">
+  <i>Engineered for simplicity, accuracy, and offline resilience.</i>
+</div>
