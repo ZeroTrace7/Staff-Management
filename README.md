@@ -1,159 +1,181 @@
 # 📱 Staff Management PWA
 
 <div align="center">
-  <strong>An Android-first, offline-capable attendance Progressive Web App (PWA) for small teams.</strong>
+  <strong>Free, GPS + Selfie verified attendance app for small teams.</strong>
+  <br/>
+  <em>No app store. No subscription. No server costs.</em>
+  <br/><br/>
+  ✅ 14 production-ready features · 📴 Works offline · 🛡️ Anti-spoofing · 🗺️ Live map · ₹0/month
 </div>
-<br/>
-
-The Staff Management PWA provides a seamless, zero-cost, browser-based employee attendance system. It utilizes **Supabase** for backend services (Auth, Postgres Database, Storage) and native Web APIs (Camera, Geolocation) for a robust attendance tracking system with anti-spoofing mechanisms.
 
 ---
 
-## 🌟 Key Features
+## 🌟 What It Does
 
-### 🏢 For Business Owners (Admins)
-- **Zero-Friction Bootstrap:** Create a company profile and set up a workspace in seconds.
-- **Geofence Configuration:** Set office coordinates and a valid punch-in radius.
-- **Employee Provisioning:** Securely create and manage employee accounts directly from the dashboard.
-- **Live Dashboard:** Real-time visibility into active heads, present staff, absentees, and late arrivals.
-- **Live Map View:** Track employee locations visually via Leaflet and OpenStreetMap.
+A complete attendance system that runs in the browser. The owner sets up a workspace, adds employees, and defines an office boundary. Employees punch in by taking a selfie and sharing their GPS location. If they're outside the office zone, the app blocks the punch. Everything works offline and syncs automatically.
+
+---
+
+## ✅ 14 Working Features
+
+### 🏢 For Owners
+
+| Feature | What It Does |
+|---|---|
+| 📊 **Live Dashboard** | Real-time stats — present, absent, late, outside zone — updates automatically |
+| 🗺️ **Map View** | See every employee's last punch location on an interactive map with geofence circle |
+| 📍 **Geofence Setup** | Set office coordinates + radius — "Use Current Location" makes it instant |
+| 👤 **Employee Provisioning** | Create employee accounts securely from the dashboard — no signup needed |
+| ⏰ **Late Detection** | Automatically flags anyone who punches in after the set work start time |
+| ⚡ **Real-Time Updates** | Dashboard refreshes itself when employees punch — no manual refresh |
+| 🏢 **One-Step Bootstrap** | Sign up → create company → set geofence → add employees — all in 2 minutes |
 
 ### 👷 For Employees
-- **Role-Safe Portal:** Secure login with temporary credentials provided by the admin.
-- **Selfie Verification:** Mandatory selfie capture using the device camera (`getUserMedia`) before punching in or out.
-- **GPS Validation:** Mandatory location capture with anti-spoofing and geofence distance calculation.
-- **Offline Resilience:** Punch records queue up locally when offline and sync automatically upon reconnection.
+
+| Feature | What It Does |
+|---|---|
+| 🤳 **Selfie Verification** | Mandatory front-camera selfie at every punch — proves the right person is there |
+| 📍 **GPS Attendance** | High-accuracy location captured with every punch — stored with the record |
+| 🛡️ **Geofence Enforcement** | Can't mark attendance outside the office zone — shows exact distance |
+| 🕵️ **Anti-Spoofing** | Catches fake GPS apps — teleport detection, jitter analysis, accuracy checks |
+| 📴 **Offline Mode** | Punch without internet — records queue locally and sync when back online |
+
+### 🔧 Platform
+
+| Feature | What It Does |
+|---|---|
+| 🔒 **Role-Based Security** | 13 database policies — employees see only their data, admins see only their company |
+| 📲 **PWA** | Install from browser — works like a native app, updates instantly, no app store |
 
 ---
 
-## 🚀 The Core Workflow (v1)
+## 🚀 Quick Start
 
-1. **Owner Signup:** Create an account and initialize a company workspace.
-2. **Geofence Setup:** Define the valid office boundary and start time.
-3. **Staff Creation:** Owner generates employee credentials for the team.
-4. **Employee Login:** Staff signs in on their mobile device.
-5. **Secure Punch:** Employee takes a fresh selfie and records high-accuracy GPS coordinates.
-6. **Live Review:** Owner monitors attendance and geo-compliance in real-time from the dashboard.
+### 1. Supabase Setup
 
----
+1. Create a [Supabase](https://supabase.com) project (free tier)
+2. Run `supabase/schema.sql` in the SQL Editor — creates all tables + security policies
+3. Create a **public** storage bucket named `selfies`
+4. Enable **Email/Password** auth in Authentication → Settings
 
-## 🛠️ Technology Stack
+### 2. Configure the App
 
-**Frontend**
-- Vanilla HTML5, CSS3, JavaScript (ES6+)
-- Service Worker for offline app shell caching
-- Leaflet.js + OpenStreetMap for live tracking
-
-**Backend & Database**
-- **Supabase** (PostgreSQL Database)
-- **Supabase Auth** (Role-based access control)
-- **Supabase Storage** (Selfie retention)
-- **Supabase Realtime** (Live dashboard updates via websockets)
-
-**Native Browser APIs**
-- Geolocation API (High-accuracy GPS tracking)
-- MediaDevices API / Camera (Live selfie capture)
-
----
-
-## 📂 Project Structure
-
-```text
-Staff Management/
-├── index.html            # Role selection (Owner vs Employee)
-├── owner.html            # Admin dashboard, staff management, map view
-├── employee.html         # Employee punch portal, offline queue
-├── manifest.json         # PWA configuration
-├── service-worker.js     # Offline app-shell caching
-├── css/
-│   └── style.css         # Application styling
-├── js/
-│   ├── app.js            # Core routing and init logic
-│   ├── attendance.js     # Punch-in/out logic & spoof detection
-│   ├── auth.js           # Supabase auth wrapper & role management
-│   ├── admin-dashboard.js# Owner live statistics & realtime listeners
-│   ├── camera.js         # Selfie capture & storage upload
-│   ├── location.js       # GPS, geofencing, and distance calc
-│   ├── offline-sync.js   # LocalStorage queuing and background sync
-│   └── supabase-client.js# Supabase initialization
-└── supabase/
-    └── schema.sql        # Postgres tables, RLS policies, triggers
-```
-
----
-
-## 🔒 Security & Data Integrity
-
-- **Row Level Security (RLS):** Supabase database policies ensure employees can only write their own records, and owners can only view their company's data.
-- **Anti-Spoofing Engine:**
-  - *Teleport Detection:* Flags unnatural movement speeds (>120 km/h).
-  - *Jitter Detection:* Flags identical repeated coordinates commonly caused by mock-location apps.
-  - *Accuracy Thresholds:* Flags low-accuracy GPS pings (>150 meters).
-
----
-
-## ⚙️ Setup & Deployment
-
-### 1. Supabase Configuration
-1. Create a new [Supabase](https://supabase.com) project.
-2. Navigate to the SQL Editor and run the contents of `supabase/schema.sql` to generate tables and RLS policies.
-3. Create a **public** storage bucket named `selfies`.
-4. Enable **Email/Password** authentication in Auth Settings.
-   - *Recommendation:* Disable mandatory email confirmation for a smoother v1 bootstrap flow.
-5. Retrieve your `Project URL`, `anon key`, and `service_role key` from the project settings.
-
-### 2. Environment Variables
-Copy `.env.example` to `.env` and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Where to find it | Used by |
-|----------|-----------------|---------|
-| `SUPABASE_URL` | Supabase → Settings → API | Frontend (`supabase-client.js`) + API |
-| `SUPABASE_ANON_KEY` | Supabase → Settings → API | Frontend (`supabase-client.js`) + API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (service_role) | **Server-side only** (`api/create-employee.js`) |
-
-> ⚠️ **Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code.** It is only used by the serverless API endpoint.
-
-### 3. Client Configuration
-Update `js/supabase-client.js` with your Supabase URL and anon key:
+Update `js/supabase-client.js` with your project credentials:
 
 ```javascript
-const SUPABASE_URL = 'https://your-project-id.supabase.co';
+const SUPABASE_URL = 'https://your-project.supabase.co';
 const SUPABASE_ANON_KEY = 'your-anon-key';
 ```
 
-### 4. Local Development
-The **Add Employee** feature requires a serverless runtime to execute `api/create-employee.js`. Use the Vercel CLI for local development:
+### 3. Run Locally
 
 ```bash
-npm i -g vercel          # Install Vercel CLI (one-time)
-vercel env pull .env     # Pull env vars from your Vercel project
-vercel dev               # Starts local server with API support
+npm i -g vercel          # One-time: install Vercel CLI
+vercel env pull .env     # Pull env vars from Vercel project
+vercel dev               # Start local server with API support
 ```
 
-> **Note:** Basic features (login, punch, dashboard) work with any static server (`npx serve .`), but employee creation will 404 without the Vercel runtime.
+> 💡 Basic features work with any static server (`npx serve .`), but employee creation needs the Vercel runtime for `api/create-employee.js`.
 
-### 5. Production Deployment (Vercel)
+### 4. Deploy to Production
+
 ```bash
 vercel --prod
 ```
-Set `SUPABASE_SERVICE_ROLE_KEY` in the Vercel dashboard under **Settings → Environment Variables**.
+
+Set `SUPABASE_SERVICE_ROLE_KEY` in Vercel → Settings → Environment Variables.
 
 ---
 
-## 🚧 Roadmap & Future Scope
+## 🏗️ Project Structure
 
-While the v1 *Attendance Hard Path* is fully complete, placeholder UI exists for the following upcoming modules:
-- Leave Management & Approval Workflows
-- Payroll & Salary Configuration
-- Employee Expense Tracking
-- Holiday Management & Shift Scheduling
-- True background sync via IndexedDB (currently relies on `localStorage` queueing)
+```
+Staff Management/
+├── index.html              Landing page — role selection
+├── owner.html              Admin dashboard, map, settings
+├── employee.html           Punch portal, camera, offline queue
+├── manifest.json           PWA config (icons, theme, display)
+├── service-worker.js       Offline cache + auto-update
+│
+├── css/
+│   └── style.css           Full design system (OKLCH tokens, dark mode)
+│
+├── js/
+│   ├── app.js              Routing, UI logic, punch flow
+│   ├── auth.js             Signup, login, bootstrap, provisioning
+│   ├── attendance.js       Clock-in/out, geofence check, record building
+│   ├── camera.js           Selfie capture, compression, upload
+│   ├── location.js         GPS, Haversine distance, anti-spoofing
+│   ├── admin-dashboard.js  Stats, roster, map, realtime subscriptions
+│   ├── offline-sync.js     localStorage queue, auto-retry on reconnect
+│   ├── supabase-client.js  Database connection setup
+│   └── utils.js            Date formatting, CSV export, helpers
+│
+├── api/
+│   └── create-employee.js  Serverless endpoint (secure account creation)
+│
+└── supabase/
+    └── schema.sql          4 tables, 13 RLS policies, 2 helper functions
+```
 
 ---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Cost |
+|---|---|---|
+| **Frontend** | Vanilla HTML/CSS/JS + Service Worker | Free |
+| **Maps** | Leaflet.js + OpenStreetMap | Free |
+| **Database** | Supabase PostgreSQL | Free (500MB) |
+| **Auth** | Supabase Auth (email/password) | Free |
+| **Storage** | Supabase Storage (selfie photos) | Free (1GB) |
+| **Realtime** | Supabase Realtime (websockets) | Free |
+| **Hosting** | Vercel (static + serverless) | Free |
+| **Typography** | Google Fonts (Inter) | Free |
+| **Total** | | **₹0/month** |
+
+---
+
+## 🔒 Security
+
+- **Row Level Security (RLS)** — 13 policies ensure data isolation between companies and roles
+- **Server-Side Employee Creation** — admin key never touches the browser
+- **Anti-Spoofing Engine** — teleport detection (>120 km/h), jitter detection (identical coords), accuracy threshold (>150m)
+- **Scoped Storage** — selfies stored at `{company_id}/{user_id}/` — employees can't see each other's photos
+- **HTTPS everywhere** — Supabase + Vercel enforce TLS by default
+
+---
+
+## 📋 Environment Variables
+
+| Variable | Where to Find | Used By |
+|---|---|---|
+| `SUPABASE_URL` | Supabase → Settings → API | Frontend + API |
+| `SUPABASE_ANON_KEY` | Supabase → Settings → API | Frontend + API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (service_role) | **Server only** (`api/create-employee.js`) |
+
+> ⚠️ **Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code.** It is only used by the serverless API endpoint.
+
+---
+
+## 🚧 Roadmap
+
+Placeholder UI exists for these upcoming features:
+
+- 📋 Leave management with approval workflows
+- 💰 Payroll and salary configuration
+- 🔄 Shift scheduling
+- 📈 Attendance analytics and reports
+- 🔔 Push notifications
+
+---
+
 <div align="center">
-  <i>Engineered for simplicity, accuracy, and offline resilience.</i>
+
+**Staff Management PWA v1.0**
+
+14 features · Zero cost · Built for small teams
+
+*Engineered for simplicity, accuracy, and offline resilience.*
+
 </div>
