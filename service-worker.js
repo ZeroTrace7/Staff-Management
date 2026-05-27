@@ -1,4 +1,4 @@
-const CACHE_NAME = 'staff-management-v12';
+const CACHE_NAME = 'staff-management-v13';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -13,6 +13,7 @@ const ASSETS_TO_CACHE = [
   '/js/auth.js',
   '/js/attendance.js',
   '/js/admin-dashboard.js',
+  '/js/payroll.js',
   '/js/supabase-client.js',
   '/manifest.json'
 ];

@@ -245,6 +245,14 @@ const AdminDashboard = {
         ? `${Utils.formatDistance(lastLog.distance_from_office)} from office`
         : 'No location stored';
 
+      // Calculate today's worked hours from logs
+      const todayHours = (typeof Payroll !== 'undefined' && Payroll.calculateTodayHours)
+        ? Payroll.calculateTodayHours(userLogs)
+        : 0;
+      const hoursDisplay = (typeof Payroll !== 'undefined' && Payroll.formatHours)
+        ? Payroll.formatHours(todayHours)
+        : '—';
+
       return `
         <div style="background: #0F172A; border: 1px solid #1F2937; border-radius: 14px; padding: 16px;">
           <div class="flex justify-between items-start gap-4">
@@ -252,10 +260,16 @@ const AdminDashboard = {
               <div style="font-weight: 600; color: white;">${employee.name}</div>
               <div style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">${employee.email}</div>
             </div>
-            <div style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${status}</div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${status}</div>
+              <div style="font-size: 0.75rem; color: #60A5FA; margin-top: 4px;">⏱ ${hoursDisplay}</div>
+            </div>
           </div>
           <div style="font-size: 0.85rem; color: #CBD5E1; margin-top: 12px;">${timestamp}</div>
-          <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 6px;">${geofence}</div>
+          <div class="flex justify-between items-center" style="margin-top: 6px;">
+            <div style="font-size: 0.8rem; color: #94A3B8;">${geofence}</div>
+            <button onclick="openSalarySetup('${employee.id}', '${employee.name.replace(/'/g, "\\'")}')" style="background: #1E3A8A; color: #93C5FD; border: none; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">💰 Salary</button>
+          </div>
         </div>
       `;
     }).join('');
