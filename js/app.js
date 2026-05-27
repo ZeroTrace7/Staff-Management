@@ -902,18 +902,297 @@ function populatePayrollConfig(company) {
 }
 
 /**
- * Initialize the payroll view (placeholder for Phase 2).
+ * Current payroll month/year state.
  */
-function initPayrollView() {
-  const container = document.getElementById('payroll-content');
+let payrollMonth = new Date().getMonth() + 1;
+let payrollYear = new Date().getFullYear();
+let currentAdjustmentUserId = null;
+
+const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * Change the payroll month and reload.
+ */
+function changePayrollMonth(delta) {
+  payrollMonth += delta;
+  if (payrollMonth > 12) { payrollMonth = 1; payrollYear++; }
+  if (payrollMonth < 1) { payrollMonth = 12; payrollYear--; }
+  updatePayrollMonthLabel();
+  loadPayrollView();
+}
+
+function updatePayrollMonthLabel() {
+  const label = document.getElementById('payroll-month-label');
+  if (label) label.textContent = `${MONTH_NAMES[payrollMonth]} ${payrollYear}`;
+}
+
+/**
+ * Initialize the payroll view — load existing data or show empty state.
+ */
+async function initPayrollView() {
+  updatePayrollMonthLabel();
+  await loadPayrollView();
+}
+
+/**
+ * Load and render payroll data for the current month.
+ */
+async function loadPayrollView() {
+  const profile = await Auth.getProfile();
+  if (!profile) return;
+
+  const { runs, users } = await Payroll.getPayrollSummary(profile.company_id, payrollMonth, payrollYear);
+  renderPayrollCards(runs, users);
+}
+
+/**
+ * Render payroll cards into the container.
+ */
+function renderPayrollCards(runs, users) {
+  const container = document.getElementById('payroll-cards');
+  const totalsEl = document.getElementById('payroll-totals');
+  const confirmBtn = document.getElementById('btn-confirm-payroll');
+  const generateBtn = document.getElementById('btn-generate-payroll');
+
   if (!container) return;
-  container.innerHTML = `
-    <div style="text-align: center; padding: 60px 20px; color: #9CA3AF;">
-      <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
-      <div style="font-size: 1.2rem; font-weight: 600; color: #E2E8F0; margin-bottom: 8px;">Payroll Coming in Phase 2</div>
-      <div style="font-size: 0.9rem; line-height: 1.5;">Monthly salary generation will appear here.<br>Set up salary configs from the dashboard first.</div>
-    </div>
-  `;
+
+  if (!runs || !runs.length) {
+    container.innerHTML = `<div style="text-align: center; padding: 40px 20px; color: #6B7280;">
+      <div style="font-size: 0.95rem;">No payroll data for ${MONTH_NAMES[payrollMonth]} ${payrollYear}.</div>
+      <div style="font-size: 0.85rem; margin-top: 8px; color: #4B5563;">Tap "Generate Payroll" to calculate.</div>
+    </div>`;
+    if (totalsEl) totalsEl.classList.add('hidden');
+    if (confirmBtn) confirmBtn.classList.add('hidden');
+    if (generateBtn) { generateBtn.textContent = '⚡ Generate Payroll'; generateBtn.disabled = false; }
+    return;
+  }
+
+  const allConfirmed = runs.every(r => r.status !== 'draft');
+  const hasDrafts = runs.some(r => r.status === 'draft');
+
+  container.innerHTML = runs.map(run => {
+    const user = users[run.user_id] || {};
+    const name = user.name || 'Unknown';
+    const statusColor = run.status === 'draft' ? '#F59E0B' : (run.status === 'confirmed' ? '#22C55E' : '#3B82F6');
+    const statusLabel = run.status === 'draft' ? 'Draft' : (run.status === 'confirmed' ? 'Confirmed' : 'Paid');
+    const fc = Payroll.formatCurrency;
+
+    return `
+      <div style="background: #12141A; border: 1px solid #1F2937; border-radius: 16px; padding: 16px;">
+        <div class="flex justify-between items-start">
+          <div>
+            <div style="font-weight: 600; color: white; font-size: 1rem;">${name}</div>
+            <div style="font-size: 0.8rem; color: #9CA3AF; margin-top: 2px;">${user.email || ''}</div>
+          </div>
+          <div style="font-size: 0.75rem; font-weight: 600; color: ${statusColor}; background: ${statusColor}20; padding: 3px 10px; border-radius: 8px;">${statusLabel}</div>
+        </div>
+
+        <!-- Attendance -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+          <span style="font-size: 0.75rem; color: #22C55E; background: #22C55E15; padding: 2px 8px; border-radius: 6px;">✓ ${run.days_present}d</span>
+          <span style="font-size: 0.75rem; color: #F59E0B; background: #F59E0B15; padding: 2px 8px; border-radius: 6px;">½ ${run.half_days}d</span>
+          <span style="font-size: 0.75rem; color: #EF4444; background: #EF444415; padding: 2px 8px; border-radius: 6px;">✗ ${run.days_absent}d</span>
+          <span style="font-size: 0.75rem; color: #A855F7; background: #A855F715; padding: 2px 8px; border-radius: 6px;">⏰ ${run.late_marks} late</span>
+          ${Number(run.overtime_hours) > 0 ? `<span style="font-size: 0.75rem; color: #3B82F6; background: #3B82F615; padding: 2px 8px; border-radius: 6px;">🕐 ${run.overtime_hours}h OT</span>` : ''}
+        </div>
+
+        <!-- Earnings / Deductions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; font-size: 0.8rem;">
+          <div>
+            <div style="color: #6B7280; margin-bottom: 4px;">Earnings</div>
+            <div style="color: #CBD5E1;">Basic: ${fc(run.basic_full)}</div>
+            <div style="color: #CBD5E1;">HRA: ${fc(run.hra_full)}</div>
+            <div style="color: #CBD5E1;">Special: ${fc(run.special_full)}</div>
+            ${Number(run.overtime_pay) > 0 ? `<div style="color: #60A5FA;">OT: ${fc(run.overtime_pay)}</div>` : ''}
+            ${Number(run.bonus) > 0 ? `<div style="color: #22C55E;">Bonus: ${fc(run.bonus)}</div>` : ''}
+          </div>
+          <div>
+            <div style="color: #6B7280; margin-bottom: 4px;">Deductions</div>
+            ${Number(run.lop_deduction) > 0 ? `<div style="color: #FCA5A5;">LOP: ${fc(run.lop_deduction)}</div>` : ''}
+            ${Number(run.half_day_deduction) > 0 ? `<div style="color: #FCA5A5;">Half-day: ${fc(run.half_day_deduction)}</div>` : ''}
+            ${Number(run.late_deduction) > 0 ? `<div style="color: #FCA5A5;">Late: ${fc(run.late_deduction)}</div>` : ''}
+            ${Number(run.other_deductions) > 0 ? `<div style="color: #FCA5A5;">Other: ${fc(run.other_deductions)}</div>` : ''}
+            ${Number(run.total_deductions) === 0 ? `<div style="color: #6B7280;">None</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Net Pay -->
+        <div class="flex justify-between items-center" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #1F2937;">
+          <div style="font-size: 0.85rem; color: #9CA3AF;">Net Pay</div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #22C55E;">${fc(run.net_pay)}</div>
+        </div>
+
+        <!-- Actions -->
+        ${run.status === 'draft' ? `
+        <div class="flex gap-2" style="margin-top: 10px;">
+          <button onclick="openAdjustmentModal('${run.user_id}', '${(user.name || '').replace(/'/g, "\\'")}')" style="flex: 1; background: #1E3A8A; color: #93C5FD; border: none; border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">📝 Adjust</button>
+        </div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Totals
+  if (totalsEl) {
+    const totalPayout = runs.reduce((s, r) => s + Number(r.net_pay), 0);
+    const totalAmountEl = document.getElementById('payroll-total-amount');
+    const totalEmpEl = document.getElementById('payroll-total-employees');
+    const badge = document.getElementById('payroll-status-badge');
+
+    if (totalAmountEl) totalAmountEl.textContent = Payroll.formatCurrency(totalPayout);
+    if (totalEmpEl) totalEmpEl.textContent = runs.length;
+    if (badge) {
+      if (allConfirmed) {
+        badge.textContent = '🔒 Confirmed';
+        badge.style.background = '#064E3B';
+        badge.style.color = '#6EE7B7';
+      } else {
+        badge.textContent = '📝 Draft';
+        badge.style.background = '#78350F';
+        badge.style.color = '#FDE68A';
+      }
+    }
+    totalsEl.classList.remove('hidden');
+  }
+
+  // Show/hide buttons
+  if (confirmBtn) confirmBtn.classList.toggle('hidden', !hasDrafts);
+  if (generateBtn) {
+    generateBtn.textContent = hasDrafts ? '🔄 Regenerate Payroll' : '⚡ Generate Payroll';
+    generateBtn.disabled = allConfirmed;
+    if (allConfirmed) generateBtn.style.opacity = '0.5';
+    else generateBtn.style.opacity = '1';
+  }
+}
+
+/**
+ * Handle Generate Payroll button click.
+ */
+async function handleGeneratePayroll() {
+  const profile = await Auth.getProfile();
+  if (!profile) return;
+
+  const btn = document.getElementById('btn-generate-payroll');
+  const statusEl = document.getElementById('payroll-status');
+  const errorEl = document.getElementById('payroll-error');
+
+  if (statusEl) { statusEl.classList.add('hidden'); statusEl.textContent = ''; }
+  if (errorEl) { errorEl.classList.add('hidden'); errorEl.textContent = ''; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Calculating...'; }
+
+  const result = await Payroll.generateMonthlyPayroll(profile.company_id, payrollMonth, payrollYear);
+
+  if (btn) { btn.disabled = false; }
+
+  if (!result.success) {
+    if (errorEl) { errorEl.textContent = result.error; errorEl.classList.remove('hidden'); }
+    if (btn) btn.textContent = '⚡ Generate Payroll';
+    return;
+  }
+
+  if (statusEl) {
+    const msg = `✅ Payroll generated for ${result.runs.length} employee(s).`;
+    const errMsg = result.errors?.length ? `\n⚠️ ${result.errors.join('\n⚠️ ')}` : '';
+    statusEl.textContent = msg + errMsg;
+    statusEl.classList.remove('hidden');
+  }
+
+  await loadPayrollView();
+}
+
+/**
+ * Handle Confirm & Lock button click.
+ */
+async function handleConfirmPayroll() {
+  if (!confirm(`Lock payroll for ${MONTH_NAMES[payrollMonth]} ${payrollYear}? This cannot be undone.`)) return;
+
+  const profile = await Auth.getProfile();
+  if (!profile) return;
+
+  const btn = document.getElementById('btn-confirm-payroll');
+  if (btn) { btn.disabled = true; btn.textContent = '🔒 Locking...'; }
+
+  const result = await Payroll.confirmPayroll(profile.company_id, payrollMonth, payrollYear, profile.id);
+
+  if (btn) { btn.disabled = false; btn.textContent = '🔒 Confirm & Lock Payroll'; }
+
+  const statusEl = document.getElementById('payroll-status');
+  const errorEl = document.getElementById('payroll-error');
+
+  if (result.success) {
+    if (statusEl) { statusEl.textContent = `🔒 Payroll locked — ${result.confirmed} run(s) confirmed.`; statusEl.classList.remove('hidden'); }
+  } else {
+    if (errorEl) { errorEl.textContent = result.error; errorEl.classList.remove('hidden'); }
+  }
+
+  await loadPayrollView();
+}
+
+/**
+ * Open adjustment modal for a specific employee.
+ */
+function openAdjustmentModal(userId, userName) {
+  currentAdjustmentUserId = userId;
+  const nameEl = document.getElementById('adjustment-employee-name');
+  if (nameEl) nameEl.textContent = userName || 'Employee';
+
+  // Clear inputs
+  const amountEl = document.getElementById('adjustment-amount');
+  const descEl = document.getElementById('adjustment-description');
+  const typeEl = document.getElementById('adjustment-type');
+  if (amountEl) amountEl.value = '';
+  if (descEl) descEl.value = '';
+  if (typeEl) typeEl.value = 'bonus';
+
+  const errEl = document.getElementById('adjustment-error');
+  const successEl = document.getElementById('adjustment-success');
+  if (errEl) errEl.classList.add('hidden');
+  if (successEl) successEl.classList.add('hidden');
+
+  openModal('adjustment-modal');
+}
+
+/**
+ * Save adjustment from the modal.
+ */
+async function handleSaveAdjustment() {
+  const errEl = document.getElementById('adjustment-error');
+  const successEl = document.getElementById('adjustment-success');
+  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+  if (successEl) { successEl.classList.add('hidden'); successEl.textContent = ''; }
+
+  const type = document.getElementById('adjustment-type')?.value;
+  const amount = parseFloat(document.getElementById('adjustment-amount')?.value);
+  const description = document.getElementById('adjustment-description')?.value?.trim();
+
+  if (!amount || amount <= 0) {
+    if (errEl) { errEl.textContent = 'Please enter a valid amount.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const profile = await Auth.getProfile();
+  if (!profile || !currentAdjustmentUserId) {
+    if (errEl) { errEl.textContent = 'Unable to determine context. Please refresh.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-adjustment');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  const result = await Payroll.addAdjustment(
+    currentAdjustmentUserId, profile.company_id,
+    type, amount, description,
+    payrollMonth, payrollYear
+  );
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Add Adjustment'; }
+
+  if (result.success) {
+    if (successEl) { successEl.textContent = 'Adjustment saved! Regenerate payroll to apply.'; successEl.classList.remove('hidden'); }
+    setTimeout(() => closeModal('adjustment-modal'), 1500);
+  } else {
+    if (errEl) { errEl.textContent = result.error || 'Failed to save.'; errEl.classList.remove('hidden'); }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

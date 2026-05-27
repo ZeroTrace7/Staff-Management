@@ -264,6 +264,54 @@
     <div id="owner-map" style="position: absolute; inset: 0;"></div>
   </div>
 
+  <!-- VIEW: PAYROLL (Dark Theme) -->
+  <div id="view-payroll" class="app-layout hidden" style="background: linear-gradient(135deg, #021B35 0%, #052445 100%); color: white;">
+    <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
+      <h1 class="text-3xl font-bold mb-4" style="color: #E2E8F0;">Payroll<span style="color: #F59E0B;">.</span></h1>
+
+      <!-- Month Selector -->
+      <div class="flex justify-between items-center mb-6" style="background: #12141A; border-radius: 16px; padding: 14px 16px;">
+        <button onclick="changePayrollMonth(-1)" style="background: #1E3A8A; color: #93C5FD; border: none; border-radius: 10px; padding: 8px 14px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">◀</button>
+        <div id="payroll-month-label" style="font-size: 1.1rem; font-weight: 600; color: #E2E8F0;">May 2026</div>
+        <button onclick="changePayrollMonth(1)" style="background: #1E3A8A; color: #93C5FD; border: none; border-radius: 10px; padding: 8px 14px; font-size: 1.1rem; font-weight: 600; cursor: pointer;">▶</button>
+      </div>
+
+      <!-- Generate Button -->
+      <button id="btn-generate-payroll" onclick="handleGeneratePayroll()" style="width: 100%; background: #2563EB; color: white; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 16px;">
+        ⚡ Generate Payroll
+      </button>
+
+      <!-- Status / Error -->
+      <div id="payroll-status" class="hidden" style="background: #064E3B; color: #6EE7B7; border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 0.9rem;"></div>
+      <div id="payroll-error" class="hidden" style="background: #7F1D1D; color: #FCA5A5; border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 0.9rem;"></div>
+
+      <!-- Payroll Cards Container -->
+      <div id="payroll-cards" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="text-align: center; padding: 40px 20px; color: #6B7280;">
+          <div style="font-size: 0.95rem;">No payroll data yet. Tap "Generate Payroll" to calculate.</div>
+        </div>
+      </div>
+
+      <!-- Total Payout -->
+      <div id="payroll-totals" class="hidden" style="background: #12141A; border-radius: 16px; padding: 16px; margin-top: 16px;">
+        <div class="flex justify-between items-center">
+          <div style="color: #9CA3AF; font-size: 0.9rem;">Total Payout</div>
+          <div id="payroll-total-amount" style="font-size: 1.3rem; font-weight: 700; color: #22C55E;">₹0</div>
+        </div>
+        <div class="flex justify-between items-center" style="margin-top: 8px;">
+          <div style="color: #9CA3AF; font-size: 0.85rem;">Employees</div>
+          <div id="payroll-total-employees" style="color: #E2E8F0; font-weight: 500;">0</div>
+        </div>
+        <div id="payroll-status-badge" style="margin-top: 12px; text-align: center; font-size: 0.85rem; font-weight: 600; padding: 6px 16px; border-radius: 8px; display: inline-block;"></div>
+      </div>
+
+      <!-- Confirm Button -->
+      <button id="btn-confirm-payroll" onclick="handleConfirmPayroll()" class="hidden" style="width: 100%; background: #15803D; color: white; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 12px;">
+        🔒 Confirm & Lock Payroll
+      </button>
+    </div>
+  </div>
+
   <!-- VIEW: SETTINGS (Dark Theme) -->
   <div id="view-settings" class="app-layout hidden" style="background: linear-gradient(180deg, #1A1C23 0%, #111418 100%); color: white;">
     <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
@@ -305,15 +353,45 @@
           <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Employee Categories</div>
           <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
         </div>
-        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
-          <div class="settings-item-icon" style="color: #D1D5DB;">⚙️</div>
-          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Payroll Configurations</div>
-          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
-        </div>
-        <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
-          <div class="settings-item-icon" style="color: #D1D5DB;">⚙️</div>
-          <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Payroll Template</div>
-          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
+        <!-- Payroll Configuration (Real) -->
+        <div style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="settings-item-icon" style="color: #D1D5DB;">💰</div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0; font-weight: 600;">Payroll Configuration</div>
+          </div>
+          <div class="flex flex-col gap-3" style="padding-left: 4px;">
+            <div>
+              <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Daily Rate Method</label>
+              <select id="payroll-rate-method" style="width: 100%; background: #0F172A; border: 1px solid #374151; color: white; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem;">
+                <option value="26_day">26-day (recommended)</option>
+                <option value="30_day">30-day (calendar)</option>
+                <option value="actual">Actual working days</option>
+              </select>
+            </div>
+            <div class="flex gap-3">
+              <div style="flex: 1;">
+                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Work Hours/Day</label>
+                <input id="payroll-work-hours" type="number" step="0.5" min="1" max="24" value="8" class="input" style="background: #0F172A; border-color: #374151; color: white;">
+              </div>
+              <div style="flex: 1;">
+                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Late Grace (mins)</label>
+                <input id="payroll-grace-minutes" type="number" min="0" max="120" value="15" class="input" style="background: #0F172A; border-color: #374151; color: white;">
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div style="flex: 1;">
+                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Late marks → ½ day</label>
+                <input id="payroll-late-threshold" type="number" min="1" max="10" value="3" class="input" style="background: #0F172A; border-color: #374151; color: white;">
+              </div>
+              <div style="flex: 1;">
+                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Overtime Rate (×)</label>
+                <input id="payroll-ot-multiplier" type="number" step="0.5" min="1" max="4" value="2" class="input" style="background: #0F172A; border-color: #374151; color: white;">
+              </div>
+            </div>
+            <div id="payroll-config-error" class="error-msg hidden"></div>
+            <div id="payroll-config-success" class="success-msg hidden"></div>
+            <button id="btn-save-payroll-config" onclick="handleSavePayrollConfig()" style="background: #2563EB; color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 600; cursor: pointer; margin-top: 4px;">Save Payroll Settings</button>
+          </div>
         </div>
         <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
           <div class="settings-item-icon" style="color: #D1D5DB;">🛡️</div>
@@ -442,9 +520,9 @@
       <div class="nav-icon" style="background: #2563EB; border-radius: 20px; padding: 8px 24px;">👥</div>
       <span style="color: white; font-weight: 500;">Staff</span>
     </div>
-    <div class="bottom-nav-item" style="position: relative;" id="nav-work">
-      <div class="nav-icon" style="background: transparent;">💼</div>
-      <span>Work</span>
+    <div class="bottom-nav-item" onclick="navigateTo('view-payroll')" id="nav-payroll">
+      <div class="nav-icon" style="background: transparent;">💰</div>
+      <span>Payroll</span>
     </div>
     <div class="bottom-nav-item" id="nav-leaves">
       <div class="nav-icon" style="background: transparent;">📅</div>
@@ -495,6 +573,85 @@
     </div>
   </div>
 
+  <!-- SALARY SETUP MODAL -->
+  <div id="salary-setup-modal" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 120; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #111827; width: 100%; max-width: 440px; border-radius: 20px; padding: 24px; color: white; box-shadow: 0 16px 40px rgba(0,0,0,0.35); max-height: 90vh; overflow-y: auto;">
+      <div class="flex justify-between items-center mb-4">
+        <h3 style="font-size: 1.25rem; font-weight: 700;">💰 Salary Setup</h3>
+        <button onclick="closeModal('salary-setup-modal')" style="background: none; border: none; color: #9CA3AF; font-size: 1.4rem; cursor: pointer;">×</button>
+      </div>
+      <div id="salary-setup-name" style="font-size: 0.9rem; color: #60A5FA; margin-bottom: 16px; font-weight: 500;">Employee</div>
+      <div class="flex flex-col gap-4">
+        <div>
+          <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Monthly CTC (₹)</label>
+          <input id="salary-ctc" type="number" min="0" class="input" placeholder="e.g. 25000" oninput="updateSpecialAllowance()" style="background: #0F172A; border-color: #374151; color: white;">
+        </div>
+        <div class="flex gap-3">
+          <div style="flex: 1;">
+            <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Basic Salary (%)</label>
+            <input id="salary-basic-pct" type="number" min="50" max="100" value="50" class="input" oninput="updateSpecialAllowance()" style="background: #0F172A; border-color: #374151; color: white;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">HRA (%)</label>
+            <input id="salary-hra-pct" type="number" min="0" max="50" value="20" class="input" oninput="updateSpecialAllowance()" style="background: #0F172A; border-color: #374151; color: white;">
+          </div>
+        </div>
+        <div style="background: #0F172A; border-radius: 10px; padding: 12px; border: 1px solid #1E3A8A;">
+          <div style="font-size: 0.8rem; color: #9CA3AF;">Special Allowance (auto-calculated)</div>
+          <div id="salary-special-display" style="font-size: 1rem; color: #60A5FA; font-weight: 600; margin-top: 4px;">30%</div>
+        </div>
+
+        <div style="border-top: 1px solid #374151; padding-top: 12px; margin-top: 4px;">
+          <div style="font-size: 0.85rem; color: #9CA3AF; margin-bottom: 8px;">Bank Details (Optional)</div>
+          <div class="flex flex-col gap-3">
+            <input id="salary-bank-account" type="text" class="input" placeholder="Account Number" style="background: #0F172A; border-color: #374151; color: white;">
+            <input id="salary-bank-ifsc" type="text" class="input" placeholder="IFSC Code" style="background: #0F172A; border-color: #374151; color: white;">
+            <input id="salary-pan" type="text" class="input" placeholder="PAN Number" style="background: #0F172A; border-color: #374151; color: white;">
+          </div>
+        </div>
+
+        <div id="salary-setup-error" class="error-msg hidden"></div>
+        <div id="salary-setup-success" class="success-msg hidden"></div>
+        <button id="btn-save-salary" onclick="handleSaveSalaryConfig()" class="btn-primary">Save Salary Config</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADJUSTMENT MODAL -->
+  <div id="adjustment-modal" class="hidden" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 120; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #111827; width: 100%; max-width: 420px; border-radius: 20px; padding: 24px; color: white; box-shadow: 0 16px 40px rgba(0,0,0,0.35);">
+      <div class="flex justify-between items-center mb-4">
+        <h3 style="font-size: 1.25rem; font-weight: 700;">📝 Add Adjustment</h3>
+        <button onclick="closeModal('adjustment-modal')" style="background: none; border: none; color: #9CA3AF; font-size: 1.4rem; cursor: pointer;">×</button>
+      </div>
+      <div id="adjustment-employee-name" style="font-size: 0.9rem; color: #60A5FA; margin-bottom: 16px; font-weight: 500;">Employee</div>
+      <div class="flex flex-col gap-4">
+        <div>
+          <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Type</label>
+          <select id="adjustment-type" style="width: 100%; background: #0F172A; border: 1px solid #374151; color: white; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem;">
+            <option value="bonus">🎁 Bonus (addition)</option>
+            <option value="incentive">⭐ Incentive (addition)</option>
+            <option value="reimbursement">💳 Reimbursement (addition)</option>
+            <option value="advance_recovery">🔄 Advance Recovery (deduction)</option>
+            <option value="fine">⚠️ Fine (deduction)</option>
+            <option value="other_deduction">➖ Other Deduction</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Amount (₹)</label>
+          <input id="adjustment-amount" type="number" min="0" class="input" placeholder="e.g. 2000" style="background: #0F172A; border-color: #374151; color: white;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Description (optional)</label>
+          <input id="adjustment-description" type="text" class="input" placeholder="e.g. Performance bonus" style="background: #0F172A; border-color: #374151; color: white;">
+        </div>
+        <div id="adjustment-error" class="error-msg hidden"></div>
+        <div id="adjustment-success" class="success-msg hidden"></div>
+        <button id="btn-save-adjustment" onclick="handleSaveAdjustment()" class="btn-primary">Add Adjustment</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Owner page: set role on load
     var selectedRole = 'business';
@@ -508,6 +665,7 @@
   <script src="js/location.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/admin-dashboard.js"></script>
+  <script src="js/payroll.js"></script>
   <script src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

@@ -369,7 +369,345 @@ const Payroll = {
     const h = Math.floor(decimalHours);
     const m = Math.round((decimalHours - h) * 60);
     return `${h}h ${m}m`;
+  },
+
+  // ─── PHASE 2: PAYROLL GENERATION ENGINE ─────────────────────────────────────
+
+  /**
+   * Generate monthly payroll for all employees with salary configs.
+   * Uses the corrected Full-CTC-minus-deductions model (no double deduction).
+   */
+  async generateMonthlyPayroll(companyId, month, year) {
+    try {
+      const client = this._requireClient();
+
+      // 1. Get company settings
+      const { data: company, error: companyErr } = await client
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+      if (companyErr) throw companyErr;
+
+      // 2. Get all active salary configs
+      const salaryConfigs = await this.getCompanySalaryConfigs(companyId);
+      if (!salaryConfigs.length) {
+        return { success: false, error: 'No salary configurations found. Set up salary for employees first.' };
+      }
+
+      // 3. Get employee names for display
+      const { data: users } = await client
+        .from('users')
+        .select('id, name, email')
+        .eq('company_id', companyId)
+        .eq('is_active', true);
+      const userMap = {};
+      for (const u of (users || [])) userMap[u.id] = u;
+
+      // 4. Get existing adjustments for this month
+      const { data: adjustments } = await client
+        .from('salary_adjustments')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('pay_month', month)
+        .eq('pay_year', year);
+      const adjByUser = {};
+      for (const adj of (adjustments || [])) {
+        if (!adjByUser[adj.user_id]) adjByUser[adj.user_id] = [];
+        adjByUser[adj.user_id].push(adj);
+      }
+
+      const results = [];
+      const errors = [];
+
+      // 5. Process each employee with salary config
+      for (const config of salaryConfigs) {
+        try {
+          // Calculate working hours from attendance_logs
+          const attendance = await this.calculateWorkingHours(
+            config.user_id, companyId, month, year, company
+          );
+
+          // Company settings snapshot
+          const method = company.daily_rate_method || '26_day';
+          const workHours = Number(company.work_hours_per_day) || 8;
+          const otMultiplier = Number(company.overtime_multiplier) || 2.0;
+          const latePerHalfDay = Number(company.late_marks_per_half_day) || 3;
+
+          // Base days
+          const baseDays = this._getBaseDays(method, month, year);
+          const dailyRate = Number(config.monthly_ctc) / baseDays;
+
+          // Step 1: Full CTC components
+          const ctc = Number(config.monthly_ctc);
+          const basicFull = ctc * Number(config.basic_pct) / 100;
+          const hraFull = ctc * Number(config.hra_pct) / 100;
+          const specialFull = ctc - basicFull - hraFull;
+
+          // Step 2: Late deduction days
+          const lateDeductionDays = Math.floor(attendance.lateMarks / latePerHalfDay) * 0.5;
+
+          // Step 3: Deductions (from full CTC)
+          const lopDeduction = attendance.daysAbsent * dailyRate;
+          const halfDayDeduction = attendance.halfDays * 0.5 * dailyRate;
+          const lateDeduction = lateDeductionDays * dailyRate;
+
+          // Step 4: Overtime
+          const hourlyRate = dailyRate / workHours;
+          const overtimePay = attendance.overtimeHours * hourlyRate * otMultiplier;
+
+          // Step 5: Adjustments
+          const userAdj = adjByUser[config.user_id] || [];
+          let bonusTotal = 0;
+          let otherDeductions = 0;
+          for (const adj of userAdj) {
+            if (adj.amount > 0) bonusTotal += Number(adj.amount);
+            else otherDeductions += Math.abs(Number(adj.amount));
+          }
+
+          // Step 6: Totals
+          const grossFull = basicFull + hraFull + specialFull + overtimePay;
+          const totalDeductions = lopDeduction + halfDayDeduction + lateDeduction + otherDeductions;
+          const totalAdditions = overtimePay + bonusTotal;
+          const netPay = grossFull - totalDeductions + bonusTotal;
+
+          // Round all values
+          const round = v => Math.round(v * 100) / 100;
+
+          const payrollRow = {
+            user_id: config.user_id,
+            company_id: companyId,
+            pay_month: month,
+            pay_year: year,
+            // Snapshot
+            salary_config_id: config.id,
+            snapshot_monthly_ctc: ctc,
+            snapshot_basic_pct: Number(config.basic_pct),
+            snapshot_hra_pct: Number(config.hra_pct),
+            snapshot_daily_rate_method: method,
+            snapshot_work_hours_per_day: workHours,
+            snapshot_overtime_multiplier: otMultiplier,
+            // Attendance
+            base_days: baseDays,
+            days_present: attendance.daysPresent,
+            half_days: attendance.halfDays,
+            days_absent: attendance.daysAbsent,
+            late_marks: attendance.lateMarks,
+            late_deduction_days: lateDeductionDays,
+            overtime_hours: attendance.overtimeHours,
+            // Earnings
+            basic_full: round(basicFull),
+            hra_full: round(hraFull),
+            special_full: round(specialFull),
+            overtime_pay: round(overtimePay),
+            gross_full: round(grossFull),
+            // Deductions
+            lop_deduction: round(lopDeduction),
+            half_day_deduction: round(halfDayDeduction),
+            late_deduction: round(lateDeduction),
+            other_deductions: round(otherDeductions),
+            total_deductions: round(totalDeductions),
+            // Additions
+            bonus: round(bonusTotal),
+            total_additions: round(totalAdditions),
+            // Net
+            net_pay: round(netPay),
+            status: 'draft'
+          };
+
+          // Upsert — if a draft already exists for this employee+month, replace it
+          const { data: existing } = await client
+            .from('payroll_runs')
+            .select('id, status')
+            .eq('user_id', config.user_id)
+            .eq('pay_month', month)
+            .eq('pay_year', year)
+            .maybeSingle();
+
+          if (existing) {
+            if (existing.status !== 'draft') {
+              errors.push(`${userMap[config.user_id]?.name || config.user_id}: Payroll already confirmed/paid — skipped.`);
+              continue;
+            }
+            // Update existing draft
+            const { error: updateErr } = await client
+              .from('payroll_runs')
+              .update(payrollRow)
+              .eq('id', existing.id);
+            if (updateErr) throw updateErr;
+            payrollRow.id = existing.id;
+          } else {
+            // Insert new
+            const { data: inserted, error: insertErr } = await client
+              .from('payroll_runs')
+              .insert(payrollRow)
+              .select()
+              .single();
+            if (insertErr) throw insertErr;
+            payrollRow.id = inserted.id;
+          }
+
+          results.push({
+            ...payrollRow,
+            employeeName: userMap[config.user_id]?.name || 'Unknown',
+            employeeEmail: userMap[config.user_id]?.email || ''
+          });
+        } catch (empErr) {
+          errors.push(`${userMap[config.user_id]?.name || config.user_id}: ${empErr.message}`);
+        }
+      }
+
+      console.log(`[Payroll] Generated ${results.length} payroll runs for ${month}/${year}`);
+      return { success: true, runs: results, errors };
+    } catch (err) {
+      console.error('[Payroll] generateMonthlyPayroll error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Get payroll summary for a company + month (for display).
+   */
+  async getPayrollSummary(companyId, month, year) {
+    try {
+      const client = this._requireClient();
+
+      const { data: runs, error } = await client
+        .from('payroll_runs')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('pay_month', month)
+        .eq('pay_year', year)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      if (!runs || !runs.length) return { runs: [], users: {} };
+
+      // Get user details
+      const userIds = runs.map(r => r.user_id);
+      const { data: users } = await client
+        .from('users')
+        .select('id, name, email')
+        .in('id', userIds);
+
+      const userMap = {};
+      for (const u of (users || [])) userMap[u.id] = u;
+
+      return { runs, users: userMap };
+    } catch (err) {
+      console.error('[Payroll] getPayrollSummary error:', err.message);
+      return { runs: [], users: {} };
+    }
+  },
+
+  /**
+   * Confirm a payroll run (locks it via RLS — no more edits possible).
+   */
+  async confirmPayroll(companyId, month, year, confirmedByUserId) {
+    try {
+      const client = this._requireClient();
+
+      const { data, error } = await client
+        .from('payroll_runs')
+        .update({
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString(),
+          confirmed_by: confirmedByUserId
+        })
+        .eq('company_id', companyId)
+        .eq('pay_month', month)
+        .eq('pay_year', year)
+        .eq('status', 'draft')
+        .select();
+
+      if (error) throw error;
+
+      console.log(`[Payroll] Confirmed ${data?.length || 0} payroll runs for ${month}/${year}`);
+      return { success: true, confirmed: data?.length || 0 };
+    } catch (err) {
+      console.error('[Payroll] confirmPayroll error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Add a salary adjustment (bonus, fine, advance recovery, etc.).
+   */
+  async addAdjustment(userId, companyId, type, amount, description, month, year) {
+    try {
+      const client = this._requireClient();
+
+      // Ensure amount sign matches type
+      let finalAmount = Math.abs(Number(amount));
+      if (['advance_recovery', 'fine', 'other_deduction'].includes(type)) {
+        finalAmount = -finalAmount;
+      }
+
+      const { data, error } = await client
+        .from('salary_adjustments')
+        .insert({
+          user_id: userId,
+          company_id: companyId,
+          type,
+          amount: finalAmount,
+          description: description || null,
+          pay_month: month,
+          pay_year: year
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log(`[Payroll] Adjustment added: ${type} ${finalAmount} for user ${userId}`);
+      return { success: true, adjustment: data };
+    } catch (err) {
+      console.error('[Payroll] addAdjustment error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Delete a draft payroll run (only works on draft status due to RLS).
+   */
+  async deletePayrollRun(runId) {
+    try {
+      const client = this._requireClient();
+      const { error } = await client
+        .from('payroll_runs')
+        .delete()
+        .eq('id', runId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (err) {
+      console.error('[Payroll] deletePayrollRun error:', err.message);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Get adjustments for a specific employee + month.
+   */
+  async getAdjustments(userId, companyId, month, year) {
+    try {
+      const client = this._requireClient();
+      const { data, error } = await client
+        .from('salary_adjustments')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .eq('pay_month', month)
+        .eq('pay_year', year);
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('[Payroll] getAdjustments error:', err.message);
+      return [];
+    }
   }
 };
 
 window.Payroll = Payroll;
+
