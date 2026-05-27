@@ -609,6 +609,41 @@ function cancelEmployeeCamera() {
   navigateTo('view-emp-dashboard');
 }
 
+// ── GEOFENCE REJECTION MODAL HANDLER ──────────────────────────────────────
+function showGeofenceRejection(errorMessage) {
+  // Parse distance and radius from the error message
+  // Error format: "You are 832m from the office. Move within the 100m zone to mark attendance."
+  const distMatch = errorMessage.match(/You are (\d+)m from/i);
+  const radiusMatch = errorMessage.match(/within the (\d+)m zone/i);
+  const distance = distMatch ? distMatch[1] : '—';
+  const radius = radiusMatch ? radiusMatch[1] : '—';
+
+  const msgEl = document.getElementById('geofence-reject-message');
+  const distEl = document.getElementById('geofence-reject-distance');
+
+  if (msgEl) {
+    msgEl.textContent = `You are outside your office area. Please move within ${radius}m of the office to mark your attendance.`;
+  }
+  if (distEl) {
+    distEl.textContent = `${distance}m away from office`;
+  }
+
+  // Navigate back to dashboard before showing modal
+  resetEmployeeCameraState();
+  navigateTo('view-emp-dashboard');
+  showEmployeeBanner('Cannot punch — you are outside the office zone.', '#7F1D1D');
+  openModal('geofence-reject-modal');
+}
+
+function isGeofenceError(errorMessage) {
+  return typeof errorMessage === 'string' && (
+    errorMessage.includes('from the office') ||
+    errorMessage.includes('zone to mark attendance') ||
+    errorMessage.includes('outside the office') ||
+    errorMessage.includes('Attendance cannot be saved from this location')
+  );
+}
+
 async function submitEmployeePunch() {
   if (!employeePunchBlob) {
     return showEmployeeCameraError('Capture a selfie before continuing.');
@@ -632,6 +667,11 @@ async function submitEmployeePunch() {
   }
 
   if (!result.success) {
+    // Show the geofence rejection modal for location errors
+    if (isGeofenceError(result.error)) {
+      return showGeofenceRejection(result.error);
+    }
+    // Other errors: show in the camera view
     showEmployeeBanner(result.error, '#7F1D1D');
     return showEmployeeCameraError(result.error);
   }
@@ -641,11 +681,7 @@ async function submitEmployeePunch() {
   applyPunchState(!isPunchedIn, result.record);
 
   const suffix = result.offline ? ' Saved offline and will sync automatically.' : '';
-  if (result.record?.is_geofence_valid === false) {
-    showEmployeeBanner(`Attendance recorded outside the office zone.${suffix}`, '#92400E');
-  } else {
-    showEmployeeBanner(`Attendance recorded successfully.${suffix}`, '#065F46');
-  }
+  showEmployeeBanner(`Attendance recorded successfully.${suffix}`, '#065F46');
 }
 
 const empPermissions = {

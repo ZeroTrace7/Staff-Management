@@ -233,6 +233,30 @@
     </div>
   </div>
 
+  <!-- GEOFENCE REJECTION MODAL — shown when employee is outside office zone -->
+  <div id="geofence-reject-modal" class="hidden" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 150; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #1B1E24; width: 100%; max-width: 340px; border-radius: 24px; padding: 28px 24px; color: white; box-shadow: 0 16px 40px rgba(0,0,0,0.5); text-align: center;">
+      <!-- Location Icon -->
+      <div style="background: rgba(239, 68, 68, 0.15); width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+        <span style="font-size: 2.2rem;">📍</span>
+      </div>
+      <!-- Title -->
+      <h3 style="color: #EF4444; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Outside Office Area</h3>
+      <!-- Dynamic message — updated by JS -->
+      <p id="geofence-reject-message" style="color: #9CA3AF; font-size: 0.95rem; line-height: 1.6; margin-bottom: 8px;">
+        You are not within the office zone. Move closer to mark your attendance.
+      </p>
+      <!-- Distance badge -->
+      <div id="geofence-reject-distance" style="display: inline-block; background: rgba(239, 68, 68, 0.12); color: #FCA5A5; font-weight: 600; font-size: 0.85rem; padding: 6px 16px; border-radius: 20px; margin-bottom: 24px;">
+        — m away
+      </div>
+      <!-- Dismiss button -->
+      <button onclick="closeModal('geofence-reject-modal')" style="width: 100%; background: #EF4444; color: white; font-weight: 600; font-size: 1rem; border: none; border-radius: 12px; height: 48px; cursor: pointer; transition: opacity 0.2s ease;">
+        OK, Got it
+      </button>
+    </div>
+  </div>
+
   <div id="view-emp-camera" class="app-layout hidden" style="background: #020617; color: white; position: relative;">
     <div class="app-header" style="padding: 16px 20px;">
       <button onclick="cancelEmployeeCamera()" style="background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer;">Cancel</button>

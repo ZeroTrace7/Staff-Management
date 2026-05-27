@@ -182,17 +182,57 @@ WITH CHECK (
 
 -- ─── ATTENDANCE LOGS ────────────────────────────────────────────────────────
 
+-- Server-side geofence validation (mirrors the Haversine formula in location.js)
+-- Returns true if (lat, lng) is within the company's geofence radius,
+-- or if the company has not configured a geofence yet.
+CREATE OR REPLACE FUNCTION public.is_within_company_geofence(
+  p_lat FLOAT, p_lng FLOAT, p_company_id UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_office_lat FLOAT;
+  v_office_lng FLOAT;
+  v_radius INT;
+  v_distance FLOAT;
+BEGIN
+  SELECT geofence_lat, geofence_lng, geofence_radius
+  INTO v_office_lat, v_office_lng, v_radius
+  FROM companies WHERE id = p_company_id;
+
+  -- If geofence is not configured yet, allow the punch
+  IF v_office_lat IS NULL OR v_office_lng IS NULL
+     OR (v_office_lat = 0 AND v_office_lng = 0)
+     OR v_radius IS NULL OR v_radius <= 0 THEN
+    RETURN true;
+  END IF;
+
+  -- Haversine formula — distance in metres between employee and office
+  v_distance := 6371000.0 * 2 * ASIN(SQRT(
+    POWER(SIN(RADIANS(p_lat - v_office_lat) / 2), 2) +
+    COS(RADIANS(v_office_lat)) * COS(RADIANS(p_lat)) *
+    POWER(SIN(RADIANS(p_lng - v_office_lng) / 2), 2)
+  ));
+
+  RETURN v_distance <= v_radius;
+END;
+$$;
+
 -- Employees can view their own attendance
 DROP POLICY IF EXISTS "Users can view their own attendance" ON attendance_logs;
 CREATE POLICY "Users can view their own attendance"
 ON attendance_logs FOR SELECT USING (user_id = auth.uid());
 
--- Employees can insert their own attendance
+-- Employees can insert their own attendance ONLY if inside the geofence
 DROP POLICY IF EXISTS "Users can insert their own attendance" ON attendance_logs;
 CREATE POLICY "Users can insert their own attendance"
 ON attendance_logs FOR INSERT WITH CHECK (
     user_id = auth.uid()
     AND company_id = public.current_user_company_id()
+    AND public.is_within_company_geofence(lat, lng, company_id)
 );
 
 -- Admins can view all attendance in their company

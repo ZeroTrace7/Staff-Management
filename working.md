@@ -204,13 +204,13 @@ Same mechanism as owner page:
      - **Jitter detection**: If last 3 GPS samples have identical coordinates → flagged (common with mock GPS apps).
      - **Low accuracy**: If accuracy exceeds 150m → flagged.
    - Returns `{ lat, lng, accuracy, spoofFlags }`.
-3. **Selfie Upload**: `CameraService.uploadSelfie()`:
+3. **Geofence Enforcement**: `LocationService.isInsideGeofence()`:
+   - Uses the **Haversine formula** to calculate the distance between the employee's GPS coordinates and the company's geofence center.
+   - **If outside the zone → throws an error immediately** with the distance and required radius, blocking the punch entirely. No selfie is uploaded.
+4. **Selfie Upload** (only if inside geofence): `CameraService.uploadSelfie()`:
    - Uploads the JPEG blob to Supabase Storage bucket `selfies`.
    - Path format: `{company_id}/{user_id}/{UTC-timestamp}.jpg`.
    - Returns the public URL of the uploaded selfie.
-4. **Geofence Validation**: `LocationService.isInsideGeofence()`:
-   - Uses the **Haversine formula** to calculate the distance between the employee's GPS coordinates and the company's geofence center.
-   - Returns `{ inside: boolean, distanceMetres: number }`.
 5. **Record Assembly**: Builds an attendance record:
    ```
    { user_id, company_id, type, selfie_url, lat, lng, accuracy_meters,
@@ -236,8 +236,8 @@ Same mechanism as owner page:
 - Calls `applyPunchState(!isPunchedIn, result.record)` to flip the button (IN→OUT or OUT→IN).
 - Shows appropriate banner:
   - ✅ "Attendance recorded successfully." (green)
-  - ⚠️ "Attendance recorded outside the office zone." (amber, if `is_geofence_valid === false`)
   - Appends "Saved offline and will sync automatically." if offline.
+  - ❌ If the employee was outside the geofence, the punch is **blocked** at step F3 and this point is never reached.
 
 ### J. Employee — You Tab (`view-emp-you`)
 - Shows "Previous Reports" section with a styled monthly card (currently hardcoded to "May '26").
@@ -294,7 +294,7 @@ Same mechanism as owner page:
 | `users` | SELECT (own) | Self | `id = auth.uid()` |
 | `users` | SELECT (all) | Admins | Same `company_id` |
 | `users` | UPDATE | Admins | Same `company_id` |
-| `attendance_logs` | INSERT | Self | `user_id = auth.uid()` AND same `company_id` |
+| `attendance_logs` | INSERT | Self | `user_id = auth.uid()` AND same `company_id` AND `is_within_company_geofence(lat, lng, company_id)` |
 | `attendance_logs` | SELECT (own) | Self | `user_id = auth.uid()` |
 | `attendance_logs` | SELECT (all) | Admins | Same `company_id` |
 | `last_known_locations` | ALL (own) | Self | `user_id = auth.uid()` |

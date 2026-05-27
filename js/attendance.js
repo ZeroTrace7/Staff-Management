@@ -54,6 +54,8 @@ const Attendance = {
 
   async _buildRecord(type, selfieBlob) {
     const profile = await this._ensureProfile();
+    // Always fetch fresh company data so geofence changes by the owner take effect immediately
+    this._company = null;
     const company = await this._ensureCompany();
 
     if (!profile) throw new Error('Not authenticated.');
@@ -64,11 +66,8 @@ const Attendance = {
     }
 
     const posData = await LocationService.acquireVerifiedPosition();
-    const upload = await CameraService.uploadSelfie(selfieBlob, profile.id, profile.company_id);
-    if (!upload.success) {
-      throw new Error(upload.error || 'Selfie upload failed.');
-    }
 
+    // ── ENFORCE GEOFENCE: Check location BEFORE uploading selfie ──
     const geofence = LocationService.isInsideGeofence(
       posData.lat,
       posData.lng,
@@ -76,6 +75,19 @@ const Attendance = {
       company.geofence_lng,
       company.geofence_radius
     );
+
+    if (!geofence.inside) {
+      throw new Error(
+        `You are ${geofence.distanceMetres}m from the office. ` +
+        `Move within the ${company.geofence_radius}m zone to mark attendance.`
+      );
+    }
+
+    // Only upload selfie after confirming the employee is in the geofence
+    const upload = await CameraService.uploadSelfie(selfieBlob, profile.id, profile.company_id);
+    if (!upload.success) {
+      throw new Error(upload.error || 'Selfie upload failed.');
+    }
 
     return {
       record: {
@@ -110,7 +122,7 @@ const Attendance = {
 
     const message = String(error.message || '');
     if (message.toLowerCase().includes('row-level security')) {
-      throw new Error('Attendance save is not allowed yet. Ask the owner to update attendance permissions.');
+      throw new Error('You are outside the office zone. Attendance cannot be saved from this location.');
     }
     throw new Error(message || 'Attendance could not be saved.');
   },
