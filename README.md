@@ -100,27 +100,47 @@ Staff Management/
 3. Create a **public** storage bucket named `selfies`.
 4. Enable **Email/Password** authentication in Auth Settings.
    - *Recommendation:* Disable mandatory email confirmation for a smoother v1 bootstrap flow.
-5. Retrieve your `Project URL` and `anon key` from the project settings.
+5. Retrieve your `Project URL`, `anon key`, and `service_role key` from the project settings.
 
-### 2. Client Configuration
-Update `js/supabase-client.js` with your specific Supabase credentials:
+### 2. Environment Variables
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Where to find it | Used by |
+|----------|-----------------|---------|
+| `SUPABASE_URL` | Supabase → Settings → API | Frontend (`supabase-client.js`) + API |
+| `SUPABASE_ANON_KEY` | Supabase → Settings → API | Frontend (`supabase-client.js`) + API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API (service_role) | **Server-side only** (`api/create-employee.js`) |
+
+> ⚠️ **Never expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code.** It is only used by the serverless API endpoint.
+
+### 3. Client Configuration
+Update `js/supabase-client.js` with your Supabase URL and anon key:
 
 ```javascript
 const SUPABASE_URL = 'https://your-project-id.supabase.co';
 const SUPABASE_ANON_KEY = 'your-anon-key';
 ```
 
-### 3. Local Development
-Since the app uses standard web technologies, any static file server works:
+### 4. Local Development
+The **Add Employee** feature requires a serverless runtime to execute `api/create-employee.js`. Use the Vercel CLI for local development:
 
 ```bash
-# Using Python
-python -m http.server 8080
-
-# Using Node.js
-npx serve .
+npm i -g vercel          # Install Vercel CLI (one-time)
+vercel env pull .env     # Pull env vars from your Vercel project
+vercel dev               # Starts local server with API support
 ```
-Navigate to `http://localhost:8080/index.html` to view the application.
+
+> **Note:** Basic features (login, punch, dashboard) work with any static server (`npx serve .`), but employee creation will 404 without the Vercel runtime.
+
+### 5. Production Deployment (Vercel)
+```bash
+vercel --prod
+```
+Set `SUPABASE_SERVICE_ROLE_KEY` in the Vercel dashboard under **Settings → Environment Variables**.
 
 ---
 

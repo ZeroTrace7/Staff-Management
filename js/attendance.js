@@ -14,12 +14,34 @@ const Attendance = {
     return this._profile;
   },
 
+  COMPANY_CACHE_KEY: 'sm_company_cache',
+
   async _ensureCompany() {
     const profile = await this._ensureProfile();
     if (!profile) return null;
 
     if (!this._company || this._company.id !== profile.company_id) {
-      this._company = await Auth.getCompany(profile.company_id);
+      try {
+        const fetched = await Auth.getCompany(profile.company_id);
+        if (fetched) {
+          this._company = fetched;
+          // Cache for offline fallback
+          localStorage.setItem(this.COMPANY_CACHE_KEY, JSON.stringify(fetched));
+        }
+      } catch (err) {
+        console.warn('[Attendance] Company fetch failed, trying cache:', err.message);
+      }
+
+      // Offline fallback: use cached company data
+      if (!this._company) {
+        try {
+          const cached = localStorage.getItem(this.COMPANY_CACHE_KEY);
+          if (cached) {
+            this._company = JSON.parse(cached);
+            console.log('[Attendance] Using cached company data (offline).');
+          }
+        } catch { /* ignore parse errors */ }
+      }
     }
     return this._company;
   },

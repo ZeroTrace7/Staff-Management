@@ -47,6 +47,7 @@ const OfflineSync = {
     console.log(`[OfflineSync] Syncing ${queue.length} records...`);
     let synced = 0;
     let failed = 0;
+    let rejected = 0;
     const remaining = [];
 
     for (const record of queue) {
@@ -56,18 +57,29 @@ const OfflineSync = {
 
       const { error } = await getSupabaseClient().from('attendance_logs').insert(cleanRecord);
       if (error) {
-        console.error('[OfflineSync] Failed to sync record:', error.message);
-        remaining.push(record);
+        const msg = String(error.message || '').toLowerCase();
+        const isPermanentFailure = msg.includes('row-level security') ||
+          msg.includes('violates') || msg.includes('duplicate');
+
+        if (isPermanentFailure) {
+          // Don't re-queue records that will never succeed (e.g. geofence rejection)
+          console.warn('[OfflineSync] Permanently rejected record (discarded):', error.message);
+          rejected++;
+        } else {
+          // Transient error — keep in queue for retry
+          console.error('[OfflineSync] Transient sync failure (will retry):', error.message);
+          remaining.push(record);
+        }
         failed++;
       } else {
         synced++;
       }
     }
 
-    // Save only the ones that failed back to queue
+    // Save only the ones that had transient failures back to queue
     localStorage.setItem(this.QUEUE_KEY, JSON.stringify(remaining));
-    console.log(`[OfflineSync] Done: ${synced} synced, ${failed} failed.`);
-    return { synced, failed };
+    console.log(`[OfflineSync] Done: ${synced} synced, ${failed} failed, ${rejected} rejected.`);
+    return { synced, failed, rejected };
   }
 };
 
@@ -77,13 +89,22 @@ window.OfflineSync = OfflineSync;
 window.addEventListener('online', async () => {
   console.log('[Network] Back online — attempting sync...');
   const result = await OfflineSync.syncNow();
-  if (result.synced > 0) {
-    // Notify the user if there's UI to show
-    const banner = document.getElementById('emp-top-banner');
-    if (banner) {
-      banner.textContent = `✅ ${result.synced} offline record(s) synced successfully.`;
-      banner.style.background = '#065F46';
-      setTimeout(() => { banner.textContent = ''; }, 4000);
-    }
+  const banner = document.getElementById('emp-top-banner');
+  if (!banner) return;
+
+  if (result.synced > 0 && result.rejected === 0) {
+    banner.textContent = `✅ ${result.synced} offline record(s) synced successfully.`;
+    banner.style.background = '#065F46';
+  } else if (result.rejected > 0) {
+    banner.textContent = `⚠️ ${result.rejected} record(s) rejected — you were outside the office zone.`;
+    banner.style.background = '#7F1D1D';
+  } else if (result.synced > 0) {
+    banner.textContent = `✅ ${result.synced} synced, ${result.rejected} rejected (outside zone).`;
+    banner.style.background = '#92400E';
+  }
+
+  if (result.synced > 0 || result.rejected > 0) {
+    setTimeout(() => { banner.textContent = ''; }, 6000);
   }
 });
+
