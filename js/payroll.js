@@ -85,26 +85,50 @@ const Payroll = {
   async saveSalaryConfig(userId, companyId, config) {
     try {
       const client = this._requireClient();
+      const today = new Date().toISOString().split('T')[0];
 
-      // Deactivate existing active config
       const existing = await this.getSalaryConfig(userId);
       if (existing) {
-        const { error: deactivateError } = await client
-          .from('salary_configs')
-          .update({
-            is_active: false,
-            effective_to: new Date().toISOString().split('T')[0],
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existing.id);
+        if (existing.effective_from === today) {
+          // FIX: Same-day edit — update in place (not delete).
+          // Deletion would break FK from payroll_runs.salary_config_id.
+          const { data, error } = await client
+            .from('salary_configs')
+            .update({
+              monthly_ctc: config.monthly_ctc,
+              basic_pct: config.basic_pct || 50,
+              hra_pct: config.hra_pct || 20,
+              bank_account: config.bank_account || null,
+              bank_ifsc: config.bank_ifsc || null,
+              pan: config.pan || null,
+              uan: config.uan || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id)
+            .select()
+            .single();
 
-        if (deactivateError) {
-          console.error('[Payroll] deactivate old config error:', deactivateError.message);
-          throw deactivateError;
+          if (error) throw error;
+          console.log('[Payroll] Salary config updated in-place for user:', userId);
+          return { success: true, config: data };
+        } else {
+          // Different day: deactivate old, create new
+          const { error: deactivateError } = await client
+            .from('salary_configs')
+            .update({
+              is_active: false,
+              effective_to: today,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+          if (deactivateError) {
+            console.error('[Payroll] deactivate old config error:', deactivateError.message);
+            throw deactivateError;
+          }
         }
       }
 
-      // Insert new active config
+      // Insert new active config (only reached if no existing or existing was deactivated)
       const { data, error } = await client
         .from('salary_configs')
         .insert({
@@ -117,7 +141,7 @@ const Payroll = {
           bank_ifsc: config.bank_ifsc || null,
           pan: config.pan || null,
           uan: config.uan || null,
-          effective_from: new Date().toISOString().split('T')[0],
+          effective_from: today,
           is_active: true
         })
         .select()
@@ -195,9 +219,12 @@ const Payroll = {
     try {
       const client = this._requireClient();
 
-      // Build date range for the month (UTC)
-      const startDate = new Date(Date.UTC(year, month - 1, 1));
-      const endDate = new Date(Date.UTC(year, month, 1)); // first day of next month
+      // FIX #6: Use IST-aware month boundaries.
+      // India is UTC+5:30, so the 1st of the month in IST starts at
+      // previous day 18:30 UTC. We query a wider UTC range and group by IST date.
+      const istOffsetMs = 5.5 * 60 * 60 * 1000;
+      const startDate = new Date(Date.UTC(year, month - 1, 1) - istOffsetMs);
+      const endDate = new Date(Date.UTC(year, month, 1) - istOffsetMs + 24 * 60 * 60 * 1000);
 
       const { data: logs, error } = await client
         .from('attendance_logs')
@@ -216,13 +243,14 @@ const Payroll = {
       const workStartTime = company?.work_start_time || '09:00';
       const [startH, startM] = workStartTime.split(':').map(Number);
       const workStartMinutes = (startH || 0) * 60 + (startM || 0);
-      const overtimeMultiplier = Number(company?.overtime_multiplier) || 2.0;
 
-      // Group logs by calendar day (local timezone)
+      // FIX #6: Group logs by IST date to avoid boundary issues.
       const dayMap = {};
       for (const log of (logs || [])) {
-        const dt = new Date(log.timestamp);
-        const dayKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        const istTime = new Date(new Date(log.timestamp).getTime() + istOffsetMs);
+        const dayKey = `${istTime.getUTCFullYear()}-${String(istTime.getUTCMonth() + 1).padStart(2, '0')}-${String(istTime.getUTCDate()).padStart(2, '0')}`;
+        // Only include days that belong to the target month
+        if (istTime.getUTCMonth() + 1 !== month || istTime.getUTCFullYear() !== year) continue;
         if (!dayMap[dayKey]) dayMap[dayKey] = [];
         dayMap[dayKey].push(log);
       }
@@ -246,27 +274,30 @@ const Payroll = {
         // Skip weekends for attendance tracking (they're not working days)
         if (isWeekend && dayLogs.length === 0) continue;
 
-        // Pair clock_in / clock_out
+        // FIX #6: Pair clock_in / clock_out by consuming each clock_out once.
         let hoursWorked = 0;
         let isLate = false;
         const clockIns = dayLogs.filter(l => l.type === 'clock_in');
         const clockOuts = dayLogs.filter(l => l.type === 'clock_out');
+        const usedClockOutIds = new Set();
 
         for (let i = 0; i < clockIns.length; i++) {
           const cin = new Date(clockIns[i].timestamp);
-          // Find matching clock_out (next clock_out after this clock_in)
-          const cout = clockOuts.find(co => new Date(co.timestamp) > cin);
+          // Find the earliest unused clock_out after this clock_in
+          const cout = clockOuts.find(co =>
+            new Date(co.timestamp) > cin && !usedClockOutIds.has(co.id)
+          );
           if (cout) {
+            usedClockOutIds.add(cout.id);
             hoursWorked += (new Date(cout.timestamp) - cin) / (1000 * 60 * 60);
-          } else if (i === clockIns.length - 1) {
-            // Still clocked in — don't count partial hours for payroll
           }
+          // If no matching clock_out, don't count (still clocked in)
         }
 
-        // Check late (first clock_in of the day)
+        // Check late (first clock_in of the day, using IST time)
         if (clockIns.length > 0) {
-          const firstCin = new Date(clockIns[0].timestamp);
-          const actualMinutes = firstCin.getHours() * 60 + firstCin.getMinutes();
+          const firstCinIST = new Date(new Date(clockIns[0].timestamp).getTime() + istOffsetMs);
+          const actualMinutes = firstCinIST.getUTCHours() * 60 + firstCinIST.getUTCMinutes();
           if (actualMinutes > workStartMinutes + graceMinutes) {
             isLate = true;
             lateMarks++;
@@ -282,11 +313,10 @@ const Payroll = {
           status = 'half';
           halfDays++;
         } else if (dayLogs.length > 0 && hoursWorked > 0) {
-          // Worked some hours but less than half day — still counts as half
           status = 'half';
           halfDays++;
         } else if (!isWeekend) {
-          // Only count weekdays as absent
+          // Only count past weekdays as absent
           const today = new Date();
           const checkDate = new Date(year, month - 1, d);
           if (checkDate < today) {
@@ -466,9 +496,10 @@ const Payroll = {
           }
 
           // Step 6: Totals
+          // FIX #3: overtime is already in grossFull, so total_additions = bonusTotal only
           const grossFull = basicFull + hraFull + specialFull + overtimePay;
           const totalDeductions = lopDeduction + halfDayDeduction + lateDeduction + otherDeductions;
-          const totalAdditions = overtimePay + bonusTotal;
+          const totalAdditions = bonusTotal; // NOT overtimePay — it's already in grossFull
           const netPay = grossFull - totalDeductions + bonusTotal;
 
           // Round all values
@@ -601,29 +632,26 @@ const Payroll = {
   },
 
   /**
-   * Confirm a payroll run (locks it via RLS — no more edits possible).
+   * Confirm a payroll run — calls SECURITY DEFINER RPC to bypass RLS.
+   * FIX #1: Direct UPDATE would fail because WITH CHECK requires status='draft'
+   * on the new row, but the new row has status='confirmed'.
    */
-  async confirmPayroll(companyId, month, year, confirmedByUserId) {
+  async confirmPayroll(companyId, month, year) {
     try {
       const client = this._requireClient();
 
       const { data, error } = await client
-        .from('payroll_runs')
-        .update({
-          status: 'confirmed',
-          confirmed_at: new Date().toISOString(),
-          confirmed_by: confirmedByUserId
-        })
-        .eq('company_id', companyId)
-        .eq('pay_month', month)
-        .eq('pay_year', year)
-        .eq('status', 'draft')
-        .select();
+        .rpc('confirm_payroll', {
+          p_company_id: companyId,
+          p_pay_month: month,
+          p_pay_year: year
+        });
 
       if (error) throw error;
 
-      console.log(`[Payroll] Confirmed ${data?.length || 0} payroll runs for ${month}/${year}`);
-      return { success: true, confirmed: data?.length || 0 };
+      const confirmed = data || 0;
+      console.log(`[Payroll] Confirmed ${confirmed} payroll runs for ${month}/${year}`);
+      return { success: true, confirmed };
     } catch (err) {
       console.error('[Payroll] confirmPayroll error:', err.message);
       return { success: false, error: err.message };
@@ -704,6 +732,207 @@ const Payroll = {
       return data || [];
     } catch (err) {
       console.error('[Payroll] getAdjustments error:', err.message);
+      return [];
+    }
+  },
+
+  // ─── PHASE 3: SALARY SLIP GENERATION ────────────────────────────────────────
+
+  /**
+   * Build salary slip HTML from a payroll_run row + metadata.
+   * Uses only snapshot data from the run — never queries live salary_configs.
+   */
+  buildSlipHTML(run, employeeName, employeeEmail, companyName) {
+    const fc = this.formatCurrency;
+    const _months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const month = _months[run.pay_month] || run.pay_month;
+    const year = run.pay_year;
+    const statusLabel = run.status === 'draft' ? 'DRAFT' : (run.status === 'confirmed' ? 'CONFIRMED' : 'PAID');
+    const statusColor = run.status === 'draft' ? '#F59E0B' : '#22C55E';
+    const specialPct = 100 - Number(run.snapshot_basic_pct) - Number(run.snapshot_hra_pct);
+
+    return `
+    <div class="salary-slip" style="max-width: 640px; margin: 0 auto; font-family: 'Inter', sans-serif; color: #1F2937; background: white; padding: 32px; border-radius: 16px;">
+      <!-- Header -->
+      <div style="border-bottom: 2px solid #E5E7EB; padding-bottom: 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <div style="font-size: 1.4rem; font-weight: 700; color: #111827;">${companyName || 'Company'}</div>
+            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 4px;">Salary Slip — ${month} ${year}</div>
+          </div>
+          <div style="font-size: 0.75rem; font-weight: 600; color: ${statusColor}; background: ${statusColor}15; padding: 4px 12px; border-radius: 6px;">${statusLabel}</div>
+        </div>
+      </div>
+
+      <!-- Employee Info -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; margin-bottom: 20px; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+        <div><span style="color: #6B7280;">Employee:</span> <strong>${employeeName}</strong></div>
+        <div><span style="color: #6B7280;">Email:</span> ${employeeEmail}</div>
+        <div><span style="color: #6B7280;">Monthly CTC:</span> ${fc(run.snapshot_monthly_ctc)}</div>
+        <div><span style="color: #6B7280;">Rate Method:</span> ${run.snapshot_daily_rate_method}</div>
+      </div>
+
+      <!-- Attendance Summary -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #374151;">Attendance Summary</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.8rem;">
+          <div style="background: #ECFDF5; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #065F46;">${run.days_present}</div>
+            <div style="color: #6B7280;">Present</div>
+          </div>
+          <div style="background: #FEF3C7; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #92400E;">${run.half_days}</div>
+            <div style="color: #6B7280;">Half Days</div>
+          </div>
+          <div style="background: #FEE2E2; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #991B1B;">${run.days_absent}</div>
+            <div style="color: #6B7280;">Absent</div>
+          </div>
+          <div style="background: #F3E8FF; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #6B21A8;">${run.late_marks}</div>
+            <div style="color: #6B7280;">Late Marks</div>
+          </div>
+          <div style="background: #DBEAFE; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #1E40AF;">${run.overtime_hours}h</div>
+            <div style="color: #6B7280;">Overtime</div>
+          </div>
+          <div style="background: #F3F4F6; padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-weight: 600; color: #374151;">${run.base_days}</div>
+            <div style="color: #6B7280;">Base Days</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Earnings & Deductions Table -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <!-- Earnings -->
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #065F46;">Earnings</div>
+          <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Basic (${run.snapshot_basic_pct}%)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500;">${fc(run.basic_full)}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">HRA (${run.snapshot_hra_pct}%)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500;">${fc(run.hra_full)}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Special (${specialPct}%)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500;">${fc(run.special_full)}</td>
+            </tr>
+            ${Number(run.overtime_pay) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Overtime (${run.snapshot_overtime_multiplier}×)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #2563EB;">${fc(run.overtime_pay)}</td>
+            </tr>` : ''}
+            ${Number(run.bonus) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Bonus/Additions</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #059669;">${fc(run.bonus)}</td>
+            </tr>` : ''}
+            <tr style="font-weight: 600;">
+              <td style="padding: 8px 0;">Gross</td>
+              <td style="padding: 8px 0; text-align: right;">${fc(run.gross_full)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Deductions -->
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #991B1B;">Deductions</div>
+          <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+            ${Number(run.lop_deduction) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">LOP (${run.days_absent}d)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #DC2626;">${fc(run.lop_deduction)}</td>
+            </tr>` : ''}
+            ${Number(run.half_day_deduction) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Half-Day (${run.half_days}d)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #DC2626;">${fc(run.half_day_deduction)}</td>
+            </tr>` : ''}
+            ${Number(run.late_deduction) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Late (${run.late_deduction_days}d)</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #DC2626;">${fc(run.late_deduction)}</td>
+            </tr>` : ''}
+            ${Number(run.other_deductions) > 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">Other</td>
+              <td style="padding: 6px 0; text-align: right; font-weight: 500; color: #DC2626;">${fc(run.other_deductions)}</td>
+            </tr>` : ''}
+            ${Number(run.total_deductions) === 0 ? `<tr style="border-bottom: 1px solid #E5E7EB;">
+              <td style="padding: 6px 0; color: #6B7280;">—</td>
+              <td style="padding: 6px 0; text-align: right; color: #6B7280;">None</td>
+            </tr>` : ''}
+            <tr style="font-weight: 600;">
+              <td style="padding: 8px 0;">Total</td>
+              <td style="padding: 8px 0; text-align: right; color: #DC2626;">${fc(run.total_deductions)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Net Pay -->
+      <div style="background: #065F46; color: white; border-radius: 10px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="font-size: 1rem; font-weight: 600;">Net Pay</div>
+        <div style="font-size: 1.5rem; font-weight: 700;">${fc(run.net_pay)}</div>
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align: center; font-size: 0.7rem; color: #9CA3AF; margin-top: 12px;">
+        Generated by Staff Management • ${run.confirmed_at ? 'Confirmed ' + new Date(run.confirmed_at).toLocaleDateString('en-IN') : 'Draft'}
+      </div>
+    </div>
+    `;
+  },
+
+  /**
+   * Open a salary slip in a new print window.
+   */
+  printSlip(run, employeeName, employeeEmail, companyName) {
+    const html = this.buildSlipHTML(run, employeeName, employeeEmail, companyName);
+    const printWindow = window.open('', '_blank', 'width=700,height=900');
+    printWindow.document.write(`<!DOCTYPE html>
+    <html>
+    <head>
+      <title>Salary Slip - ${employeeName} - ${run.pay_month}/${run.pay_year}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #F3F4F6; padding: 24px; }
+        @media print {
+          body { background: white; padding: 0; }
+          .no-print { display: none !important; }
+          .salary-slip { box-shadow: none !important; border-radius: 0 !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="no-print" style="text-align: center; margin-bottom: 16px;">
+        <button onclick="window.print()" style="background: #2563EB; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">🖨️ Print Slip</button>
+        <button onclick="window.close()" style="background: #6B7280; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-left: 8px;">Close</button>
+      </div>
+      ${html}
+    </body>
+    </html>`);
+    printWindow.document.close();
+  },
+
+  /**
+   * Get payroll history for a specific employee (for the "You" tab).
+   */
+  async getEmployeePayrollHistory(userId) {
+    try {
+      const client = this._requireClient();
+      const { data, error } = await client
+        .from('payroll_runs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('pay_year', { ascending: false })
+        .order('pay_month', { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('[Payroll] getEmployeePayrollHistory error:', err.message);
       return [];
     }
   }

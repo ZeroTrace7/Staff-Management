@@ -174,15 +174,18 @@ CREATE INDEX IF NOT EXISTS idx_adjustments_period ON salary_adjustments(pay_year
 
 
 -- ── 5. RLS POLICIES ──────────────────────────────────────────────────────────
+-- FIX: All policies are DROP IF EXISTS + CREATE for safe reruns.
 
 -- salary_configs
 ALTER TABLE salary_configs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admin can manage salary configs" ON salary_configs;
 CREATE POLICY "Admin can manage salary configs"
   ON salary_configs FOR ALL
   USING (company_id = current_user_company_id() AND current_user_is_admin())
   WITH CHECK (company_id = current_user_company_id() AND current_user_is_admin());
 
+DROP POLICY IF EXISTS "Employee can view own salary config" ON salary_configs;
 CREATE POLICY "Employee can view own salary config"
   ON salary_configs FOR SELECT
   USING (user_id = auth.uid());
@@ -190,23 +193,36 @@ CREATE POLICY "Employee can view own salary config"
 -- payroll_runs
 ALTER TABLE payroll_runs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admin can view company payroll" ON payroll_runs;
 CREATE POLICY "Admin can view company payroll"
   ON payroll_runs FOR SELECT
   USING (company_id = current_user_company_id() AND current_user_is_admin());
 
+DROP POLICY IF EXISTS "Admin can insert draft payroll" ON payroll_runs;
 CREATE POLICY "Admin can insert draft payroll"
   ON payroll_runs FOR INSERT
-  WITH CHECK (company_id = current_user_company_id() AND current_user_is_admin());
+  WITH CHECK (
+    company_id = current_user_company_id()
+    AND current_user_is_admin()
+    AND status = 'draft'
+  );
 
--- Database-enforced lock: only draft payroll can be updated or deleted
+-- UPDATE: draft→draft only. draft→confirmed handled by RPC.
+DROP POLICY IF EXISTS "Admin can update only draft payroll" ON payroll_runs;
 CREATE POLICY "Admin can update only draft payroll"
   ON payroll_runs FOR UPDATE
   USING (
     company_id = current_user_company_id()
     AND current_user_is_admin()
     AND status = 'draft'
+  )
+  WITH CHECK (
+    company_id = current_user_company_id()
+    AND current_user_is_admin()
+    AND status = 'draft'
   );
 
+DROP POLICY IF EXISTS "Admin can delete only draft payroll" ON payroll_runs;
 CREATE POLICY "Admin can delete only draft payroll"
   ON payroll_runs FOR DELETE
   USING (
@@ -215,18 +231,115 @@ CREATE POLICY "Admin can delete only draft payroll"
     AND status = 'draft'
   );
 
+DROP POLICY IF EXISTS "Employee can view own payroll" ON payroll_runs;
 CREATE POLICY "Employee can view own payroll"
   ON payroll_runs FOR SELECT
   USING (user_id = auth.uid());
 
 -- salary_adjustments
+-- Split into separate SELECT / INSERT+UPDATE / DELETE policies.
+-- All mutating operations check that no confirmed/paid payroll exists for that user+month.
 ALTER TABLE salary_adjustments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admin can manage adjustments"
-  ON salary_adjustments FOR ALL
-  USING (company_id = current_user_company_id() AND current_user_is_admin())
-  WITH CHECK (company_id = current_user_company_id() AND current_user_is_admin());
+-- Drop old combined policy if it exists from a previous run
+DROP POLICY IF EXISTS "Admin can manage adjustments" ON salary_adjustments;
+DROP POLICY IF EXISTS "Admin can manage adjustments for draft months" ON salary_adjustments;
+DROP POLICY IF EXISTS "Admin can view adjustments" ON salary_adjustments;
+DROP POLICY IF EXISTS "Admin can insert adjustments for draft months" ON salary_adjustments;
+DROP POLICY IF EXISTS "Admin can delete adjustments for draft months" ON salary_adjustments;
+DROP POLICY IF EXISTS "Employee can view own adjustments" ON salary_adjustments;
 
+-- SELECT: admin can view all company adjustments (no month lock on reads)
+CREATE POLICY "Admin can view adjustments"
+  ON salary_adjustments FOR SELECT
+  USING (
+    company_id = current_user_company_id()
+    AND current_user_is_admin()
+  );
+
+-- INSERT + UPDATE: only for months without confirmed/paid payroll
+CREATE POLICY "Admin can insert adjustments for draft months"
+  ON salary_adjustments FOR INSERT
+  WITH CHECK (
+    company_id = current_user_company_id()
+    AND current_user_is_admin()
+    AND NOT EXISTS (
+      SELECT 1 FROM payroll_runs pr
+      WHERE pr.user_id = salary_adjustments.user_id
+        AND pr.pay_month = salary_adjustments.pay_month
+        AND pr.pay_year = salary_adjustments.pay_year
+        AND pr.status IN ('confirmed', 'paid')
+    )
+  );
+
+-- DELETE: also blocked for confirmed/paid months
+-- USING filters which rows can be selected for deletion.
+CREATE POLICY "Admin can delete adjustments for draft months"
+  ON salary_adjustments FOR DELETE
+  USING (
+    company_id = current_user_company_id()
+    AND current_user_is_admin()
+    AND NOT EXISTS (
+      SELECT 1 FROM payroll_runs pr
+      WHERE pr.user_id = salary_adjustments.user_id
+        AND pr.pay_month = salary_adjustments.pay_month
+        AND pr.pay_year = salary_adjustments.pay_year
+        AND pr.status IN ('confirmed', 'paid')
+    )
+  );
+
+-- Employee can view own adjustments
 CREATE POLICY "Employee can view own adjustments"
   ON salary_adjustments FOR SELECT
   USING (user_id = auth.uid());
+
+
+-- ── 6. SECURITY DEFINER RPC: CONFIRM PAYROLL ────────────────────────────────
+-- FIX #1: This function bypasses RLS to perform the draft → confirmed transition.
+-- It validates the caller is admin of the company before proceeding.
+
+CREATE OR REPLACE FUNCTION confirm_payroll(
+  p_company_id UUID,
+  p_pay_month INT,
+  p_pay_year INT
+)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count INT;
+  v_caller_id UUID;
+BEGIN
+  -- Verify caller is admin of this company
+  v_caller_id := auth.uid();
+  IF v_caller_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM users
+    WHERE id = v_caller_id
+      AND company_id = p_company_id
+      AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Not authorized: must be admin of this company';
+  END IF;
+
+  -- Perform the transition: draft → confirmed
+  UPDATE payroll_runs
+  SET status = 'confirmed',
+      confirmed_at = now(),
+      confirmed_by = v_caller_id,
+      updated_at = now()
+  WHERE company_id = p_company_id
+    AND pay_month = p_pay_month
+    AND pay_year = p_pay_year
+    AND status = 'draft';
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$;
+

@@ -523,6 +523,8 @@ async function restoreEmployeePunchState() {
 async function initializeEmployeeExperience() {
   employeeDashboardInitialized = true;
   await restoreEmployeePunchState();
+  // Phase 3: Load payroll history for "You" tab
+  initEmployeeYouTab();
 }
 
 function resetEmployeeCameraState() {
@@ -949,7 +951,13 @@ async function loadPayrollView() {
 /**
  * Render payroll cards into the container.
  */
+// Global payroll data cache for slip viewer
+let _payrollRuns = [];
+let _payrollUsers = {};
+
 function renderPayrollCards(runs, users) {
+  _payrollRuns = runs || [];
+  _payrollUsers = users || {};
   const container = document.getElementById('payroll-cards');
   const totalsEl = document.getElementById('payroll-totals');
   const confirmBtn = document.getElementById('btn-confirm-payroll');
@@ -1024,10 +1032,10 @@ function renderPayrollCards(runs, users) {
         </div>
 
         <!-- Actions -->
-        ${run.status === 'draft' ? `
         <div class="flex gap-2" style="margin-top: 10px;">
-          <button onclick="openAdjustmentModal('${run.user_id}', '${(user.name || '').replace(/'/g, "\\'")}')" style="flex: 1; background: #1E3A8A; color: #93C5FD; border: none; border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">📝 Adjust</button>
-        </div>` : ''}
+          <button onclick="viewPayrollSlip('${run.user_id}')" style="flex: 1; background: #374151; color: #E2E8F0; border: none; border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">📄 View Slip</button>
+          ${run.status === 'draft' ? `<button onclick="openAdjustmentModal('${run.user_id}', '${(user.name || '').replace(/'/g, "\\'")}')" style="flex: 1; background: #1E3A8A; color: #93C5FD; border: none; border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">📝 Adjust</button>` : ''}
+        </div>
       </div>
     `;
   }).join('');
@@ -1112,7 +1120,7 @@ async function handleConfirmPayroll() {
   const btn = document.getElementById('btn-confirm-payroll');
   if (btn) { btn.disabled = true; btn.textContent = '🔒 Locking...'; }
 
-  const result = await Payroll.confirmPayroll(profile.company_id, payrollMonth, payrollYear, profile.id);
+  const result = await Payroll.confirmPayroll(profile.company_id, payrollMonth, payrollYear);
 
   if (btn) { btn.disabled = false; btn.textContent = '🔒 Confirm & Lock Payroll'; }
 
@@ -1192,6 +1200,114 @@ async function handleSaveAdjustment() {
     setTimeout(() => closeModal('adjustment-modal'), 1500);
   } else {
     if (errEl) { errEl.textContent = result.error || 'Failed to save.'; errEl.classList.remove('hidden'); }
+  }
+}
+
+/**
+ * View a payroll slip for a specific employee (opens print window).
+ */
+function viewPayrollSlip(userId) {
+  const run = _payrollRuns.find(r => r.user_id === userId);
+  if (!run) return;
+  const user = _payrollUsers[userId] || {};
+  const companyName = window._cachedCompanyData?.name || 'Company';
+  Payroll.printSlip(run, user.name || 'Employee', user.email || '', companyName);
+}
+
+/**
+ * View a slip from employee's own payroll history.
+ */
+function viewEmployeeSlip(runIndex) {
+  const runs = window._employeePayrollRuns || [];
+  const run = runs[runIndex];
+  if (!run) return;
+  const profile = window._cachedProfile;
+  const companyName = window._cachedCompanyData?.name || 'Company';
+  Payroll.printSlip(run, profile?.name || 'Employee', profile?.email || '', companyName);
+}
+
+/**
+ * Initialize the employee "You" tab with real payroll history.
+ */
+async function initEmployeeYouTab() {
+  const container = document.querySelector('#view-emp-you .app-main');
+  if (!container) return;
+
+  const profile = await Auth.getProfile();
+  if (!profile) return;
+  window._cachedProfile = profile;
+
+  // Load company name
+  if (!window._cachedCompanyData && profile.company_id) {
+    const company = await Auth.getCompany(profile.company_id);
+    if (company) window._cachedCompanyData = company;
+  }
+
+  // Load payroll history
+  if (typeof Payroll !== 'undefined') {
+    const runs = await Payroll.getEmployeePayrollHistory(profile.id);
+    window._employeePayrollRuns = runs;
+
+    // Build the You tab content
+    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fullMonthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const fc = Payroll.formatCurrency;
+
+    let html = `
+      <div style="position: absolute; top: 16px; right: 16px; font-size: 1.5rem; color: #9CA3AF; z-index: 10;">👤</div>
+      <div style="padding: 24px 16px; padding-top: 80px; padding-bottom: 200px;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 4px;">Your Payslips</h2>
+        <p style="font-size: 0.9rem; color: #9CA3AF; margin-bottom: 24px;">${runs.length ? `Last ${runs.length} month(s)` : 'No payslips yet'}</p>
+    `;
+
+    if (runs.length) {
+      html += runs.map((run, idx) => {
+        const statusColor = run.status === 'draft' ? '#F59E0B' : '#22C55E';
+        const statusLabel = run.status === 'draft' ? 'Draft' : 'Confirmed';
+        const monthLabel = `${fullMonthNames[run.pay_month]} ${run.pay_year}`;
+        const shortMonth = `${monthNames[run.pay_month]} '${String(run.pay_year).slice(2)}`;
+
+        return `
+          <div style="background: #1B1E24; border: 1px solid #2D3748; border-radius: 16px; padding: 16px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <div style="font-weight: 600; font-size: 1.05rem;">${monthLabel}</div>
+                <div style="font-size: 0.8rem; color: #9CA3AF; margin-top: 4px;">CTC: ${fc(run.snapshot_monthly_ctc)}</div>
+              </div>
+              <div style="font-size: 0.7rem; font-weight: 600; color: ${statusColor}; background: ${statusColor}15; padding: 3px 10px; border-radius: 6px;">${statusLabel}</div>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+              <span style="font-size: 0.7rem; color: #22C55E; background: #22C55E15; padding: 2px 8px; border-radius: 6px;">✓ ${run.days_present}d</span>
+              <span style="font-size: 0.7rem; color: #EF4444; background: #EF444415; padding: 2px 8px; border-radius: 6px;">✗ ${run.days_absent}d</span>
+              <span style="font-size: 0.7rem; color: #A855F7; background: #A855F715; padding: 2px 8px; border-radius: 6px;">⏰ ${run.late_marks}</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #374151;">
+              <div style="font-size: 1.1rem; font-weight: 700; color: #22C55E;">${fc(run.net_pay)}</div>
+              <button onclick="viewEmployeeSlip(${idx})" style="background: #374151; color: #E2E8F0; border: none; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">📄 View Slip</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      html += `
+        <div style="text-align: center; padding: 40px; color: #6B7280;">
+          <div style="font-size: 2.5rem; margin-bottom: 12px;">📄</div>
+          <div style="font-size: 0.95rem;">No payslips available yet.</div>
+          <div style="font-size: 0.85rem; margin-top: 4px; color: #4B5563;">Your salary slips will appear here once generated.</div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+
+    // Replace the inner content but keep the floating punch button
+    container.innerHTML = html + `
+      <div onclick="navigateTo('view-emp-dashboard')" style="position: fixed; bottom: 140px; right: 16px; background: #F97316; width: 64px; height: 64px; border-radius: 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 24px rgba(249,115,22,0.4); z-index: 50; cursor: pointer;">
+        <span style="color: white; font-size: 2rem;">✋</span>
+      </div>
+    `;
   }
 }
 
