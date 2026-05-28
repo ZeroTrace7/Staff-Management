@@ -266,10 +266,7 @@ const AdminDashboard = {
             </div>
           </div>
           <div style="font-size: 0.85rem; color: #CBD5E1; margin-top: 12px;">${timestamp}</div>
-          <div class="flex justify-between items-center" style="margin-top: 6px;">
-            <div style="font-size: 0.8rem; color: #94A3B8;">${geofence}</div>
-            <button onclick="openSalarySetup('${employee.id}', '${employee.name.replace(/'/g, "\\'")}')" style="background: #1E3A8A; color: #93C5FD; border: none; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">💰 Salary</button>
-          </div>
+          <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 6px;">${geofence}</div>
         </div>
       `;
     }).join('');

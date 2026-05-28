@@ -312,6 +312,64 @@
     </div>
   </div>
 
+  <!-- VIEW: PAYROLL CONFIGURATION -->
+  <div id="view-payroll-config" class="app-layout hidden" style="background: linear-gradient(180deg, #1A1C23 0%, #111418 100%); color: white;">
+    <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 22px;">
+        <button onclick="navigateTo('view-settings')" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid #374151; background: #1B1E24; color: #E2E8F0; font-size: 1.2rem; cursor: pointer;">←</button>
+        <div>
+          <h1 class="text-3xl font-bold" style="color: #E2E8F0; margin: 0;">Payroll Configuration<span style="color: #F59E0B;">.</span></h1>
+          <div style="color: #9CA3AF; font-size: 0.9rem; margin-top: 4px;">Attendance rules used for payroll calculation</div>
+        </div>
+      </div>
+
+      <div style="background: #1B1E24; border: 1px solid #2D3748; border-radius: 16px; padding: 18px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; border-radius: 12px; background: #1E3A8A; display: flex; align-items: center; justify-content: center;">💰</div>
+          <div>
+            <div style="font-size: 1rem; font-weight: 700; color: #E2E8F0;">Salary Calculation Rules</div>
+            <div style="font-size: 0.82rem; color: #9CA3AF; margin-top: 2px;">Saved at company level</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 0.82rem; color: #9CA3AF; display: block; margin-bottom: 6px;">Daily Rate Method</label>
+            <select id="payroll-rate-method" style="width: 100%; background: #0F172A; border: 1px solid #374151; color: white; border-radius: 12px; padding: 13px 14px; font-size: 0.98rem;">
+              <option value="26_day">26-day (recommended)</option>
+              <option value="30_day">30-day (calendar)</option>
+              <option value="actual">Actual working days</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+            <div>
+              <label style="font-size: 0.82rem; color: #9CA3AF; display: block; margin-bottom: 6px;">Work Hours/Day</label>
+              <input id="payroll-work-hours" type="number" step="0.5" min="1" max="24" value="8" class="input" style="background: #0F172A; border-color: #374151; color: white; min-height: 50px;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; color: #9CA3AF; display: block; margin-bottom: 6px;">Late Grace (mins)</label>
+              <input id="payroll-grace-minutes" type="number" min="0" max="120" value="15" class="input" style="background: #0F172A; border-color: #374151; color: white; min-height: 50px;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; color: #9CA3AF; display: block; margin-bottom: 6px;">Late marks to half-day</label>
+              <input id="payroll-late-threshold" type="number" min="1" max="10" value="3" class="input" style="background: #0F172A; border-color: #374151; color: white; min-height: 50px;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; color: #9CA3AF; display: block; margin-bottom: 6px;">Overtime Rate</label>
+              <input id="payroll-ot-multiplier" type="number" step="0.5" min="1" max="4" value="2" class="input" style="background: #0F172A; border-color: #374151; color: white; min-height: 50px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="payroll-config-error" class="error-msg hidden"></div>
+      <div id="payroll-config-success" class="success-msg hidden"></div>
+
+      <button id="btn-save-payroll-config" onclick="handleSavePayrollConfig()" style="width: 100%; background: #2563EB; color: white; border: none; border-radius: 14px; padding: 15px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 12px 28px rgba(37, 99, 235, 0.22);">Save Payroll Settings</button>
+    </div>
+  </div>
+
   <!-- VIEW: SETTINGS (Dark Theme) -->
   <div id="view-settings" class="app-layout hidden" style="background: linear-gradient(180deg, #1A1C23 0%, #111418 100%); color: white;">
     <div class="app-main" style="padding: 24px 16px; padding-bottom: 150px;">
@@ -353,45 +411,13 @@
           <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Employee Categories</div>
           <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem;">›</div>
         </div>
-        <!-- Payroll Configuration (Real) -->
-        <div style="border-bottom: 1px solid #374151; padding: 18px 16px;">
-          <div class="flex items-center gap-4 mb-4">
-            <div class="settings-item-icon" style="color: #D1D5DB;">💰</div>
-            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0; font-weight: 600;">Payroll Configuration</div>
+        <div class="settings-item" onclick="navigateTo('view-payroll-config')" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
+          <div class="settings-item-icon" style="color: #D1D5DB;">💰</div>
+          <div>
+            <div class="settings-item-label" style="font-size: 1.1rem; color: #E2E8F0;">Payroll Configuration</div>
+            <div style="font-size: 0.82rem; color: #9CA3AF; margin-top: 2px;">Rate method, work hours, late rules, overtime</div>
           </div>
-          <div class="flex flex-col gap-3" style="padding-left: 4px;">
-            <div>
-              <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Daily Rate Method</label>
-              <select id="payroll-rate-method" style="width: 100%; background: #0F172A; border: 1px solid #374151; color: white; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem;">
-                <option value="26_day">26-day (recommended)</option>
-                <option value="30_day">30-day (calendar)</option>
-                <option value="actual">Actual working days</option>
-              </select>
-            </div>
-            <div class="flex gap-3">
-              <div style="flex: 1;">
-                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Work Hours/Day</label>
-                <input id="payroll-work-hours" type="number" step="0.5" min="1" max="24" value="8" class="input" style="background: #0F172A; border-color: #374151; color: white;">
-              </div>
-              <div style="flex: 1;">
-                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Late Grace (mins)</label>
-                <input id="payroll-grace-minutes" type="number" min="0" max="120" value="15" class="input" style="background: #0F172A; border-color: #374151; color: white;">
-              </div>
-            </div>
-            <div class="flex gap-3">
-              <div style="flex: 1;">
-                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Late marks → ½ day</label>
-                <input id="payroll-late-threshold" type="number" min="1" max="10" value="3" class="input" style="background: #0F172A; border-color: #374151; color: white;">
-              </div>
-              <div style="flex: 1;">
-                <label style="font-size: 0.8rem; color: #9CA3AF; display: block; margin-bottom: 4px;">Overtime Rate (×)</label>
-                <input id="payroll-ot-multiplier" type="number" step="0.5" min="1" max="4" value="2" class="input" style="background: #0F172A; border-color: #374151; color: white;">
-              </div>
-            </div>
-            <div id="payroll-config-error" class="error-msg hidden"></div>
-            <div id="payroll-config-success" class="success-msg hidden"></div>
-            <button id="btn-save-payroll-config" onclick="handleSavePayrollConfig()" style="background: #2563EB; color: white; border: none; border-radius: 10px; padding: 12px; font-weight: 600; cursor: pointer; margin-top: 4px;">Save Payroll Settings</button>
-          </div>
+          <div class="settings-item-chevron" style="color: #9CA3AF; font-size: 1.2rem; margin-left: auto;">›</div>
         </div>
         <div class="settings-item" style="border-bottom: 1px solid #374151; padding: 18px 16px;">
           <div class="settings-item-icon" style="color: #D1D5DB;">🛡️</div>

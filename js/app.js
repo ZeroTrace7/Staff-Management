@@ -26,6 +26,7 @@ function navigateTo(viewId) {
     'view-dashboard',
     'view-map',
     'view-payroll',
+    'view-payroll-config',
     'view-settings',
     'view-emp-dashboard',
     'view-emp-you',
@@ -60,6 +61,7 @@ function navigateTo(viewId) {
       'view-dashboard': 'nav-staff',
       'view-map': 'nav-map',
       'view-payroll': 'nav-payroll',
+      'view-payroll-config': 'nav-settings',
       'view-settings': 'nav-settings',
       'view-emp-dashboard': 'nav-punch',
       'view-emp-you': 'nav-you',
@@ -91,6 +93,9 @@ function navigateTo(viewId) {
   }
   if (viewId === 'view-payroll') {
     initPayrollView();
+  }
+  if (viewId === 'view-payroll-config') {
+    initPayrollConfigView();
   }
   if (viewId === 'view-emp-dashboard' && employeeDashboardInitialized) {
     restoreEmployeePunchState();
@@ -901,6 +906,19 @@ function populatePayrollConfig(company) {
   if (graceMinutes) graceMinutes.value = company.late_grace_minutes || 15;
   if (lateThreshold) lateThreshold.value = company.late_marks_per_half_day || 3;
   if (otMultiplier) otMultiplier.value = company.overtime_multiplier || 2.0;
+}
+
+async function initPayrollConfigView() {
+  const profile = await Auth.getProfile();
+  if (!profile) return;
+
+  let company = window._cachedCompanyData;
+  if (!company || company.id !== profile.company_id) {
+    company = await Auth.getCompany(profile.company_id);
+    if (company) window._cachedCompanyData = company;
+  }
+
+  populatePayrollConfig(company);
 }
 
 /**
